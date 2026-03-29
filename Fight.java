@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.ArrayList;
 
 
-
 // In this program we are doing a random to check who will win in a psudo very simplified dnd style combat
 // @Ben Farjun
 // @hmimesh @git.hub 
@@ -86,6 +85,37 @@ enum Feat{
             p.potionHeal += p.MAXHP / 10;
             System.out.println(Color.BGREEN.get() + "You gained ALCHEMIST! Better potions" + Color.RESET.get());
         }
+    },
+    FIREMAGIC("FIRE MAGIC", "Add 1d6 of fire damage", "damage", 5){
+        public void apply(Player p){
+            p.fireMage = true;
+            p.dicePool();
+            p.fireMage = false;
+            System.out.println(Color.BRED.get() + "You gained FIRE MAGIC! Add 1d6 of fire damage" + Color.RESET.get());
+        }
+    },
+    POISON("POISON", "Add a chance of 1d4 of poison damage", "damage", 3){
+        public void apply(Player p){
+            p.poisonMage = true;
+            p.canPoison = true;
+            p.dicePool();
+            p.poisonMage = false;
+            System.out.println(Color.BGREEN.get() + "You gained POISON! Add a consistent 1d4 of poison damage" + Color.RESET.get());
+        }
+    },
+    WATERMAGE("Water Mage", "Add 1d8 of water damage", "damage", 5){
+        public void apply(Player p){
+            p.waterMage = true;
+            p.dicePool();
+            p.waterMage = false;
+            System.out.println(Color.BLUE.get() + "You gained WATER MAGE! Add 1d8 of water damage" + Color.RESET.get());
+        }
+    },
+    RECOVERY("Recovery", "heal 10% of max hp and the end of battles", "health", 2){
+        public void apply(Player p){
+            p.recovery += 10;
+            System.out.println(Color.RED.get() + "You gained RECOVERY! heal 10% of max hp and the end of battles" + Color.RESET.get());
+        }
     };
 
     String name;
@@ -98,32 +128,70 @@ enum Feat{
         this.description = description;
         this.category = category;
         this.rarity = rarity;
+    
     }
+
 
     public abstract void apply(Player p);
 
     public void display(){
-        System.out.println(Color.PURPLE.get() + name + Color.RESET.get() + " - " + description);
-    }
+    String rName;
+        switch(rarity){
+        case 2:
+            rName = Color.BLUE.get() + "Uncommon" + Color.RESET.get();
+            break;
+        case 3:
+            rName = Color.GREEN.get() + "Rare" + Color.RESET.get();
+            break;
+        case 4:
+            rName = Color.YELLOW.get() + "Epic" + Color.RESET.get();
+            break;
+        case 5:
+            rName = Color.PURPLE.get() + "Legendary" + Color.RESET.get();
+            break;
+        default:
+            rName = "Common";
+       
+}
+    System.out.println(Color.PURPLE.get() + name + Color.RESET.get() + " - " + description +   "(" + rName + ")" );
+}
 }
 
-//=================== ENEMY CLASS ====================
 
-class Enemy{ //the enemy class should be with hp for hit points, ac = for armor class, and attack for bonusus
-    Random rand = new Random();
-    String data;
+// ================= ENTETY CLASS =================
+abstract class Entety{
     String name;
     int hp;
     int ac;
+    int bonus;
+    int lvl;
+    int xp;
+    int gold;
+    int luck; 
+
+    abstract int dmg();
+
+    int hitBonus(){
+       return bonus;
+    }
+
+}
+
+
+
+
+//=================== ENEMY CLASS ====================
+
+class Enemy extends Entety{ //the enemy class should be with hp for hit points, ac = for armor class, and attack for bonusus
+    Random rand = new Random();
+    String data;
     int attack;
     int diceCount;
     int diceType;
-    int bonus;
     int potionHeal;
-    int lvl;  
-    int xp; //xp it will give
-    int gold; // gold it will give
+    int poisonCount;
     boolean boss;
+    boolean poisoned = false;
 
     public boolean isBoss(){
         int chance =  rand.nextInt(100);
@@ -132,14 +200,15 @@ class Enemy{ //the enemy class should be with hp for hit points, ac = for armor 
             this.name += Color.BRED.get() + " Boss" + Color.RESET.get();
             this.gold *= 2;
             this.xp *= 2;
+            this.poisonCount = 0;
             this.ac += 2;
             this.diceCount += 1;
+            this.luck += 10;
             this.hp += 5 * ((this.lvl / 2) + 1) ;
             this.bonus += rand.nextInt(5) + 1;
-            if(rand.nextInt((100) + 1) < 10){
+            if((rand.nextInt((100) + 1) - (this.lvl * 5) < 10 ) && this.lvl > 6){
                 this.name = Color.CYAN.get() + "Legendary " + Color.RESET.get() + this.name;
-                this.diceCount += 1;
-                this.bonus +=1;
+                this.bonus += 1;
                 this.ac += 1;
                 this.hp += 10;
             }
@@ -172,6 +241,7 @@ class Enemy{ //the enemy class should be with hp for hit points, ac = for armor 
             this.diceType = 4;
             this.diceCount = 1 + ((lvl / 4));
             this.bonus = lvl / 3;
+            this.poisonCount = 0;
             this.attack = dmg();
             this.xp = this.lvl / 4 + rand.nextInt(5) + 1;
             this.gold =  rand.nextInt(10) + this.xp;
@@ -183,6 +253,7 @@ class Enemy{ //the enemy class should be with hp for hit points, ac = for armor 
             this.diceType = 6;
             this.diceCount = 1 + ((lvl / 4));
             this.bonus = rand.nextInt((maxBonus)) + 1;
+            this.poisonCount = 0;
             this.attack = dmg();
             this.xp = this.lvl / 3 + rand.nextInt(6) + 2;
             this.gold = rand.nextInt(20) + this.xp;
@@ -194,6 +265,7 @@ class Enemy{ //the enemy class should be with hp for hit points, ac = for armor 
             this.diceType = 8;
             this.diceCount = 1 + ((lvl / 4));
             this.bonus = rand.nextInt(maxBonus) + 3;
+            this.poisonCount = 0;
             this.attack = dmg();
             this.xp = this.lvl / 2 + rand.nextInt(7) + 3;
             this.gold = rand.nextInt(40) + 1 + this.xp;
@@ -204,16 +276,19 @@ class Enemy{ //the enemy class should be with hp for hit points, ac = for armor 
             this.ac = rand.nextInt((10 + lvl) - (6 + lvl) + 1) + (6 + lvl);
             this.diceType = 6;
             this.diceCount = 2 + ((lvl / 4));
-            this.bonus = lvl / 2 + 2;
+            this.bonus = lvl / 2 + 5;
+            this.poisonCount = 0;
             this.attack = dmg();
             this.xp = this.lvl + rand.nextInt(15) +  4 + this.xp;
             this.gold = rand.nextInt(100) + 50;
             this.name = Color.PURPLE.get() + "Dragon" + Color.RESET.get();
             this.data = "Dragon";
         }else{
+            this.hp = 10;
             this.ac = 2 + lvl;
             this.diceType = 4;
             this.diceCount = 1;
+            this.poisonCount = 0;
             this.bonus = 1;
             this.attack = dmg();
             this.xp = 1;
@@ -315,11 +390,11 @@ class Weapon{ // weapons and their abilities
                 this.name = Color.GREEN.get() + "Epic " + Color.RESET.get() + this.name;
                 this.bonus += 3;
                 this.price += (int)(this.price * (0.70));
-            }else if(chance + luck >= 90 && chance < 100){
+            }else if(chance + luck >= 90 && chance < 100 && playerlvl > 5){
                 this.name = Color.PURPLE.get() + "Masterwork " + Color.RESET.get() + this.name;
                 this.bonus += 4;
                 this.price += (int)(this.price * (0.90));
-            }else if (chance + luck == 100) {
+            }else if (chance + luck == 100 && playerlvl > 6) {
                 this.name = Color.CYAN.get() + "Legendary " + Color.RESET.get() + this.name;
                 this.bonus += 5;
                 this.diceCount += 1;
@@ -328,18 +403,10 @@ class Weapon{ // weapons and their abilities
 
 
         }else if(playerlvl < 3){
-            if(chance == 100){
-                this.name = Color.CYAN.get() + "Legendary " + Color.RESET.get() + this.name;
-                this.bonus += 5;
-                this.price += this.price;
-            }else if(chance > 97){
-                this.name =Color.PURPLE.get() + "Masterwork " + Color.RESET.get() + this.name;
-                this.bonus += 4;
-                this.price += (int)(this.price *(0.90));
-            }else if(chance > 93){
+            if(chance > 93){
                 this.name =Color.GREEN.get() + "Epic " + Color.RESET.get() + this.name;
                 this.bonus += 3;
-                this.price += (int)(this.price * (0.50));
+                this.price += (int)(this.price * (0.70));
             }else if(chance  > 87){
                 this.name += "+2";
                 this.bonus += 2;
@@ -376,46 +443,52 @@ class Weapon{ // weapons and their abilities
         }   
 
     }
-
-
 }
+
 //========== PLAYER CLAS ============
 
-class Player{
-    String name;
-    int ac;
-    int hp;
+class Player extends Entety{
     int MAXHP;
+    int MAXAC;
     int modifier;
-    int lvl;
-    int xp;
-    int gold;
-    int luck;
     Weapon wep;
+    // =========== Booleans feats ==========
+    boolean fireMage = false;
+    boolean waterMage = false;
+    boolean poisonMage = false;
+    boolean canPoison = false;
+
+    // ========== Booleans feats end =========
     int potionHeal;
     int diceCount;
+    int recovery;
     int attack;
     Item item; // holder for potions for easy accsess for the bag
     Armor arm;
+
     Map<String, Integer> bag = new HashMap<>(); //bag for diff potions
     Map<Feat, Integer> feats = new HashMap<>(); //track acquired feats and count
+    Map<Integer, Integer> dicepool = new HashMap<>();
+    Map<Integer, Integer> poisonpool= new HashMap<>();
+
+
     Random rand = new Random();
+
 
     public void newPlayer(String newName){ //when starting new game init for the user
         this.name = Color.ORANGE.get() + newName + Color.RESET.get();
         this.lvl = 1;
         this.xp = 0;
-        this.gold = rand.nextInt(100) + 26;
         this.MAXHP = rand.nextInt(6) + 1 + 30;
         this.hp = this.MAXHP;
         this.luck = 0;
         this.arm = new Armor();
         this.diceCount = 0;
         this.arm.updateArmor(this.lvl, this);
-        this.ac = rand.nextInt(15 - 7) + 7 + this.arm.ac;
+        this.ac = 10 + this.arm.ac;
         this.wep = new Weapon();
         this.item = new Item();
-        this.modifier = 0;
+        this.gold = rand.nextInt(100 - (this.arm.price) - this.wep.price) + 26;    
         item.makePotion();
         this.bag.put(this.item.name, bag.getOrDefault(this.item.name, 0) + 1);
         wep.update(rand.nextInt(4) + 1, this.lvl, this);
@@ -426,14 +499,62 @@ class Player{
         int xpNeeded = (this.lvl + 1) * (this.lvl + 2) * 5;
         return xpNeeded;
     }
+    
+    public void dicePool(){
+        if(fireMage == true){
+            this.dicepool.put(6, 1);
+        }else if(this.waterMage == true){
+            this.dicepool.put(8, 1);
+        }else if(this.poisonMage == true){
+            this.poisonpool.put(4, 1);
+        }
+    }
+    
+    public int poisondmg(){
+        int poisondmg = 0;
+        for(Map.Entry<Integer, Integer> entry: poisonpool.entrySet()){
+            int diceType = entry.getKey();
+            int diceCount = entry.getValue();
+            for (int i = 0; i < diceCount; i++){
+                poisondmg += rand.nextInt(diceType) + 1;
+            }
+        }
+        return poisondmg;
+    }
+
+    private int rollExtraDice(){
+        int extraDamage = 0; 
+        for(Map.Entry<Integer, Integer> entry : dicepool.entrySet()){
+            int diceType = entry.getKey();
+            int diceCount = entry.getValue();
+            for(int i = 0; i < diceCount; i++){
+                int roll = rand.nextInt(diceType) + 1;
+                extraDamage += roll;
+                switch(diceType){
+                    case 6:
+                        System.out.println("Fire damage: " + Color.RED.get() + roll + Color.RESET.get());
+                        break;
+                    case 8:
+                        System.out.println("Water damage: " + Color.BLUE.get() + roll + Color.RESET.get());
+                        break;
+                }
+            }
+        }
+        return extraDamage;
+    }
+
+    @Override
+    int hitBonus() {
+        return this.modifier + this.wep.bonus;
+    }
 
 
-   public int dmg(){
-        int damage = 0;
-        Random rand = new Random();
+    public int dmg(){ // main damage algo
+        int damage = 0;;
         for (int i = 0; i < wep.diceCount + this.diceCount; i++){
             damage += rand.nextInt(wep.diceType) + 1;
         }
+        damage += rollExtraDice();
         damage += wep.bonus + this.modifier;
         return damage;
     }
@@ -486,9 +607,13 @@ class Player{
 
     public void recoverAfterBattle(){ 
         if (this.hp < this.MAXHP){
-            int heal = (int)(this.MAXHP * 0.30);
+            int heal = (int)(this.MAXHP * (this.recovery / 100.0));
             this.hp = Math.min(this.hp + heal, this.MAXHP);
+            if(heal == 0){
+                System.out.println("Current health: " + this.hp + "/" + this.MAXHP + ".");
+            }else{
             System.out.println("You recovered " + heal + " HP after battle. HP is now " + this.hp + "/" + this.MAXHP + ".");
+            }
         }
     }
 
@@ -500,9 +625,6 @@ class Player{
             this.hp = this.MAXHP;
             System.out.println("Your max hp is now " + this.MAXHP);
             this.modifier = (this.lvl / 2);
-            if(this.lvl % 4 == 0){
-                this.ac += 1;
-            }
             System.out.println("Your ac is " + this.ac);
             offerFeatSelection();
         }
@@ -747,26 +869,18 @@ class Armor{ // same logic as wep except for protaction
                 this.name = Color.GREEN.get() + "Epic " + Color.RESET.get() + this.name;
                 this.ac += 3;
                 this.price += (int)(this.price * (0.70));
-            }else if(chance >= 90 && chance < 100){
+            }else if(chance >= 90 && chance < 100 && playerlvl > 5){
                 this.name = Color.PURPLE.get() + "Masterwork " + Color.RESET.get() + this.name;
                 this.ac += 4;
                 this.price += (int)(this.price * (0.90));
-            }else if(chance == 100){
+            }else if(chance == 100 && playerlvl > 6){
                 this.name = Color.CYAN.get()  + "Legendary " + Color.RESET.get() + this.name;
                 this.ac += 5;
                 this.price += this.price;
             }
         }
         else if(playerlvl < 3){
-            if(chance == 100){
-                this.name = Color.CYAN.get() + "Legendary " + Color.RESET.get() + this.name;
-                this.ac += 5;
-                this.price += this.price;
-            }else if(chance > 97){
-                this.name = Color.PURPLE.get() + "Masterwork " + Color.RESET.get() + this.name;
-                this.ac += 4;
-                this.price += (int)(this.price *(0.90));
-            }else if(chance > 93){
+            if(chance > 93){
                 this.name = Color.GREEN.get() + "Epic " + Color.RESET.get() + this.name;
                 this.ac += 3;
                 this.price += (int)(this.price * (0.50));
@@ -780,7 +894,6 @@ class Armor{ // same logic as wep except for protaction
                 this.price += (int)(this.price * (0.30));
             }
         }
-
     }
 }
 
@@ -864,29 +977,68 @@ class Shop{ // Can be accesed at the end of fights
 
 
 public class Fight{
-    
+    //=============== POISON METHODS ==================
+    Random rand = new Random(); // random number generator ie rolls 
+    public  static void tryApplyPoison(Player player, Enemy enemy){
+        Random rand = new Random();
+        int d100 = rand.nextInt(100) + 1;
+        if((player.canPoison == true && (d100 + player.luck) > 80) || enemy.poisoned == true ){
+            enemy.poisoned = true;
+            int hit = player.poisondmg();
+            enemy.hp -= hit;
+            System.out.println(enemy.name + Color.BGREEN.get() + " Is poisoned! and was hit by: " + hit + Color.RESET.get());
+        }if((enemy.poisonCount % (rand.nextInt(3) + 1)) == 0){
+            enemy.poisoned = false;
+        }
+    }
+
+    public static void processPoison(Player player, Enemy enemy){
+        if(enemy.poisoned == true){
+            int hit = player.poisondmg();
+            enemy.hp -= hit;
+            System.out.println(enemy.name + Color.BGREEN.get() + " Is poisoned! and was hit by: " + hit + Color.RESET.get());
+        }
+        if(enemy.poisoned == true){
+            enemy.poisonCount += 1;
+        }else{
+            enemy.poisonCount = 0;
+        }
+        if(enemy.poisonCount % 3 == 0){
+            enemy.poisoned = false;
+            System.out.println(enemy.name + Color.BGREEN.get() + " Is not poisoned anymore!" + Color.RESET.get());
+        }
+    }
+
+
     //METHOD FOR ATTACKING
-    public static int attack(int roll, int attackerAtt, int bonus, int attackedAc, int attackedHp, String name, String attName, int luck){ // takes in the "dice" roll, attacker attack, attacked ac, attacked hp, name of the attacker, name of the attacked and returning new attacked hp
-        int crit = 20 - (luck / 10);
-        if (((roll + bonus) >= attackedAc && attackedHp > 0 && roll != 1) || roll == (crit)){
+    public static int attack(int roll, Entety att, Entety def){ // takes in the "dice" roll, attacker attack, attacked ac, attacked hp, name of the attacker, name of the attacked and returning new attacked hp
+        Random rand = new Random();
+        int crit = 20 - (att.luck / 10);
+        if (((roll + att.hitBonus()) >= def.ac && def.hp > 0 && roll != 1) || roll >= (crit)){
             if(roll >= crit){
                  //Critical double damgae
-                int dmg = attackerAtt * 2;
-                attackedHp -= dmg ;
-                System.out.println(Color.RED.get() + "CRITICAL!!! " + Color.RESET.get() + name + " hit! " + attName + " for: " + Color.RED.get() + dmg + Color.RESET.get() + " hp is now at: " + attackedHp + " points!");
+                int dmg = att.dmg() * 2;
+                def.hp -= dmg ;
+                System.out.println(Color.RED.get() + "CRITICAL!!! " + Color.RESET.get() + att.name + " hit! " + def.name + " for: " + Color.RED.get() + dmg + Color.RESET.get() + " hp is now at: " + def.hp + " points!");
             }else{
-                int hit = attackerAtt;
-                attackedHp -= hit;
-                System.out.println(name + " hit " + attName + " for: " + Color.RED.get() + hit + Color.RESET.get() + " their hp is: " + attackedHp + " points!");
+                int hit = att.dmg();
+                def.hp -= hit;
+                System.out.println(att.name + " hit " + def.name + " for: " + Color.RED.get() + hit + Color.RESET.get() + " " + def.name + " hp is: " + def.hp + " points!");
+
+            }
+            if(att instanceof Player && def instanceof Enemy){
+                Player p = (Player)att;
+                Enemy e = (Enemy)def;
+                tryApplyPoison(p, e);
             }
         }
         else if(roll == 1){ //1 is a critical miss no matter what
-            System.out.println("CRITICAL MISS FOR " + name);
+            System.out.println("CRITICAL MISS FOR " + att.name);
         }
         else{
-            System.out.println(name + " missed.");
+            System.out.println(att.name + " missed.");
         }
-        return attackedHp;
+        return def.hp;
     }
 
     // ============= Time Wait Method ===========
@@ -902,9 +1054,8 @@ public class Fight{
     // ============= Main ======================
 
     public static void main(String[] args){
-        
+        Random rand = new Random();
         Scanner scan = new Scanner(System.in); // for user inputs
-        Random rand = new Random(); // random number generator ie rolls 
         Player player = new Player(); // user player
         String userAnsware1 = "PLACE HOLDER"; // for if the user wants to play
         
@@ -933,7 +1084,7 @@ public class Fight{
         System.out.println("ac: " + Color.RED.get() + player.ac + Color.RESET.get());
         System.out.println("Weapon: " + player.wep.name + " damage die: " + player.wep.diceCount + "d" + player.wep.diceType);
         System.out.println("Armor: " + player.arm.name + " ac: " + player.arm.ac);
-        
+        System.out.println("Gold: " + Color.YELLOW.get() + player.gold + Color.RESET.get());
         wait(500);
 
         while(!userAnsware1.equals("y") && !userAnsware1.equals("yes")){ //loop for the first init
@@ -958,6 +1109,7 @@ public class Fight{
                 e.isBoss();
             }
 
+
             wait(500);
 
             System.out.println(player.name + " has met with " + e.name + "!");
@@ -974,13 +1126,14 @@ public class Fight{
             int rollU = rand.nextInt(20) + 1;
 
             wait(1000);
+  
 
             System.out.println("You rolled! " + (rollU));
             System.out.println("They rolled! " + (rollE));
             
                 //=======ENEMY METHOD=======
             if(e.hp > 0){
-                player.hp = attack(rollE, e.dmg(), e.bonus, player.ac, player.hp, e.name, player.name, 0);
+                player.hp = attack(rollE, e, player);
             }
                 //=========USER HEALING========
             player.autoHealInFight();
@@ -989,8 +1142,9 @@ public class Fight{
                 //=======USER METHOD=========
         
             if(player.hp > 0){
-                e.hp = attack(rollU, player.dmg(), player.modifier, e.ac, e.hp, player.name, e.name, player.luck);
+                e.hp = attack(rollU, player, e);
             }
+            processPoison(player, e);
                 //========== END OF ROUND ==========
             count += 1;
             
@@ -1045,7 +1199,7 @@ public class Fight{
                     player.offerBossFeat();
                 }
                 
-                System.out.println("You are lvl: " + player.lvl + ". " + (player.xpNeeded() - player.xp) + " needed more xp to lvl up.  with a " + player.wep.name + " that does: " + player.wep.diceCount + "d" + player.wep.diceType + " damage.");
+                System.out.println("You are lvl: " + player.lvl + ". " + (player.xpNeeded() - player.xp) + " needed more xp to lvl up.  with a " + player.wep.name + " that does: " + (player.wep.diceCount + player.diceCount) + "d" + player.wep.diceType + " + " + (player.wep.bonus + player.modifier) + " damage." );
                 System.out.println("You also have: " + Color.GREEN.get() + player.bag + Color.RESET.get() + "\n");
                 System.out.println("Armor: " + player.arm.name + " that gives: " + player.arm.ac + " ac.\n");
                 System.out.println("You have: " + Color.YELLOW.get() + (String.valueOf(player.gold)) + Color.RESET.get() + " gold.\n");
