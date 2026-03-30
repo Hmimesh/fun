@@ -1500,7 +1500,7 @@ public class Fight{
         
         
             //========FIGHT BLOCK=======
-        while (player.getHp() > 0 && player.getLvl() < 10 && player.getBag().getOrDefault("revive", 0) > 0){
+        while (player.getHp() > 0 && (player.getLvl() < 10 || player.getBag().getOrDefault("revive", 0) > 0)){
             Enemy e = new Enemy(); //spawn enemy
             e.lvlBased(player.getLvl());
             if(player.getLvl() >= 3){
