@@ -800,7 +800,7 @@ class Player extends Entity{
     
     public Enemy finalBossFight(Enemy enemy){
         int enemyXp = ((4 + this.lvl) + 19) * 2; //max final boss xp
-        if(this.lvl == 9 && this.xpNeeded() > enemyXp){
+        if(this.lvl == 9 && this.xpNeeded() <= enemyXp){
             enemy.finalBoss();
         }
         return enemy;
