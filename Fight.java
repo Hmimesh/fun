@@ -299,7 +299,6 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
         }
         int totalChance = baseChance + player.getLuck();
 
-        //drop chance is 30% with out player luck modifier
         if ((rand.nextInt(100) + 1 < totalChance)){
             Item drop = new Item();
             drop.makePotion();
@@ -312,26 +311,36 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
             System.out.println("You found a " + drop.getName());
         }     
         
-        
+    
     }
 
-    public void finalBoss(){
+    public void finalBoss(Player player){
         this.setLvl(9);
         this.setAc(this.rand.nextInt(10) + 7);
-        this.setHp(18 * 9);
+        this.setHp(22 * 9);
         this.diceType = 8;
-        this.diceCount = 2;
+        this.diceCount = 3;
         this.setBonus(5);
         this.poisonCount = 0;
         this.attack = dmg();
-        this.setXp(33); // max xp giving by the dragon + 1
+        this.setXp(33);
         this.setGold(1000);
-        this.setName("TACHO");
+        this.setLuck(10);
         this.data = "Final Boss";
-        this.isBoss(true);
-        String bossName = Color.BRED.get() + "Final " + Color.RESET.get() + Color.CYAN.get() + "TACHO" + Color.RESET.get();
-        this.setName(bossName);
-    }
+
+        this.setBoss(true); // mark as boss
+
+        
+        this.setGold(this.getGold() * 2);
+        this.setXp(this.getXp() * 2);
+        this.setAc(this.getAc() + 2);
+        this.diceCount += 1;
+        this.setLuck(this.getLuck() + 10);
+        this.setHp(this.getHp() + 5 * ((this.getLvl() / 2) + 1));
+        this.setBonus(this.getBonus() + rand.nextInt(5) + 1);
+
+        this.setName(Color.BRED.get() + "Final Boss" + Color.RESET.get() + Color.CYAN.get() + "Evil " + player.getName() + Color.RESET.get());
+}
 
     // ===== GETTERS =====
     public String getData(){
@@ -705,6 +714,11 @@ class Player extends Entity{
         this.bag.put(this.item.getName(), bag.getOrDefault(this.item.getName(), 0) + 1);
         wep.update(rand.nextInt(6) + 1, this.getLvl(), this);
         this.attack = dmg();
+        if(newName.equals("GOD")){
+            Cheats.GOD.active(this);
+            Cheats.GOD.display();
+            this.setHp(this.MAXHP);
+        }
     }
 
     // ===== GETTERS =====
@@ -1144,16 +1158,49 @@ class Player extends Entity{
     // =============== FINAL BOSS ===============
     
     public Enemy finalBossFight(Enemy enemy){
-        int enemyXp = ((4 + this.getLvl()) + 19) * 2; //max final boss xp
-        if(this.getLvl() == 9 && this.xpNeeded() <= enemyXp){
-            enemy.finalBoss();
+        
+        if(this.getLvl() == 9 && (this.xpNeeded() - this.getXp()) <= enemy.getXp()){
+            enemy.finalBoss(this);
         }
         return enemy;
     }
 
-
 }
+//=========== CHEATS ENUMS =========
 
+enum Cheats{
+    GOD("God mode", 100, 1000, 10, 3, 5){
+        public void active(Player p){
+            p.setMaxHP(100);
+            p.setGold(1000);
+            p.setModifier(10);
+            p.setDiceCount(3);
+            p.setAc(p.getAc() + 5);
+        }
+    };
+    
+    String name;
+    int hp;
+    int gold;
+    int modifier;
+    int diceCount;
+    int ac;
+
+    Cheats(String name, int hp, int gold, int modifier, int diceCount, int ac){
+        this.name = name;
+        this.hp = hp;
+        this.gold = gold;
+        this.modifier = modifier;
+        this.diceCount = diceCount;
+        this.ac = ac;
+    }
+    
+    public abstract void active(Player p);
+
+    public void display(){
+    System.out.println(Color.BBLUE.get() + "CHEATS ACTIVE! " + this.name + Color.RESET.get());
+    }
+}
 
 //=========== ITEM CLASS ==========
 
@@ -1470,6 +1517,8 @@ public class Fight{
         Player player = new Player(); // user player
         String userAnsware1 = "PLACE HOLDER"; // for if the user wants to play
         final String DEF_NAME = "hero";
+        boolean gameWon = false;
+        boolean finalBossSpawned = false;
         
         //diffrent types of counts 
         int fightCount = 0;
@@ -1517,16 +1566,27 @@ public class Fight{
         
         
             //========FIGHT BLOCK=======
-        while (player.getHp() > 0 && (player.getLvl() < 10 || player.getBag().getOrDefault("revive", 0) > 0)){
+        while (player.getHp() > 0 && !gameWon){
             Enemy e = new Enemy(); //spawn enemy
+            
+            if(!finalBossSpawned){
+                int xpLeft = player.xpNeeded() - player.getXp();
+        
+                if (player.getLvl() == 9 && xpLeft < 33){
+                    e.finalBoss(player);
+                    finalBossSpawned = true;
+                }else{
+                e.lvlBased(player.getLvl());
+                if(player.getLvl() >= 3){
+                    e.isBoss(false);
+                }
+            }
+        }else{
             e.lvlBased(player.getLvl());
             if(player.getLvl() >= 3){
                 e.isBoss(false);
             }
-
-            if(player.getLvl() == 9){ // checking for final boss
-                player.finalBossFight(e);
-            }
+        }
 
 
             wait(500);
@@ -1573,26 +1633,33 @@ public class Fight{
             System.out.println("------ End of round " + count + "------");
             }
             
-            if(player.getHp() <= 0 && player.getBag().getOrDefault("revive", 0) <= 0){
-                System.out.println("You have been defeated!");
+            if(player.getHp() <= 0){
+                if(player.getBag().getOrDefault("revive", 0) > 0){
+                    player.setHp(player.getMaxHP() / 2);
+                    player.getBag().put("revive", player.getBag().get("revive") - 1);
+                    System.out.println("You have been revived! " + Color.BBLUE.get() + player.getHp() + Color.RESET.get());
+                }else {
+                    System.out.println("You have been defeated!");
         
-                wait(1000);
+                    wait(1000);
 
-                System.out.println("========= "+ Color.RED.get() + "R I P" + Color.RESET.get() + " =========");
-                wait(300);
-                System.out.println("Name: " + player.getName());
-                System.out.println("lvl: " + Color.BLUE.get() + player.getLvl() + Color.RESET.get());
-                System.out.println("hp: " + Color.GREEN.get() + player.getMaxHP() + Color.RESET.get());
-                System.out.println("ac: " + player.getAc());
-                System.out.println("gold: " + Color.YELLOW.get() + (String.valueOf(player.getGold())) + Color.RESET.get());
-                System.out.println("You have fought: " + fightCount + " fights");
-                System.out.println("was slayed by " + Color.RED.get() + e.getName() + Color.RESET.get());
-                wait(300);
-                System.out.println("=========================");
+                    System.out.println("========= "+ Color.RED.get() + "R I P" + Color.RESET.get() + " =========");
+                    wait(300);
+                    System.out.println("Name: " + player.getName());
+                    System.out.println("lvl: " + Color.BLUE.get() + player.getLvl() + Color.RESET.get());
+                    System.out.println("hp: " + Color.GREEN.get() + player.getMaxHP() + Color.RESET.get());
+                    System.out.println("ac: " + player.getAc());
+                    System.out.println("gold: " + Color.YELLOW.get() + (String.valueOf(player.getGold())) + Color.RESET.get());
+                    System.out.println("You have fought: " + fightCount + " fights");
+                    System.out.println("was slayed by " + Color.RED.get() + e.getName() + Color.RESET.get());
+                    wait(300);
+                    System.out.println("=========================");
 
-                wait(1000);
+                    wait(1000);
 
-                System.exit(0);
+                    System.exit(0);
+                }
+
             }else if(e.getHp() <= 0){
                 if(e.getData().equals("Slime")){
                     slimeCount += 1;
@@ -1604,6 +1671,9 @@ public class Fight{
                     dragonCount += 1;
                 }else if(e.getData().equals("Rat")){
                     ratCount += 1;
+                }
+                if(e.getData().equals("Final Boss")){
+                    gameWon = true;
                 }
                 System.out.println("You have defeated the enemy! \n");
                 player.setXp(player.getXp() + e.getXp());
@@ -1653,7 +1723,8 @@ public class Fight{
             }
         }
     }
-    int score = (player.getXp() + ratCount + slimeCount + (wolfCount * 2) + (goblinCount * 3) + (dragonCount * 5) + player.getFeats().size()) / 7;
+    if(gameWon){
+    int score = (player.getXp() + ratCount + slimeCount + (wolfCount * 2) + (goblinCount * 3) + (dragonCount * 5) + player.getFeats().size() + player.getGold());
     System.out.println("======= " + Color.GREEN.get() + "W I N " + Color.RESET.get() + "=======");
     System.out.println("You have won the game!");
     System.out.println(player.getName() + " have fought: " + fightCount + " fights");
@@ -1670,5 +1741,6 @@ public class Fight{
     player.displayFeats();
     System.out.println("\nYour score is: " + score);
     System.out.println("=====================");
+    }
 }
 }
