@@ -159,7 +159,7 @@ enum Feat{
 
 
 // ================= ENTETY CLASS =================
-abstract class Entety{
+abstract class Entity{
     String name;
     int hp;
     int ac;
@@ -182,7 +182,7 @@ abstract class Entety{
 
 //=================== ENEMY CLASS ====================
 
-class Enemy extends Entety{ //the enemy class should be with hp for hit points, ac = for armor class, and attack for bonusus
+class Enemy extends Entity{ //the enemy class should be with hp for hit points, ac = for armor class, and attack for bonusus
     Random rand = new Random();
     String data;
     int attack;
@@ -193,9 +193,10 @@ class Enemy extends Entety{ //the enemy class should be with hp for hit points, 
     boolean boss;
     boolean poisoned = false;
 
-    public boolean isBoss(){
+    public boolean isBoss(boolean ending){
         int chance =  rand.nextInt(100);
-        if(chance <= 20){
+        boolean isFinal = ending;
+        if(chance <= 20 || isFinal == true ){
             this.boss = true;
             this.name += Color.BRED.get() + " Boss" + Color.RESET.get();
             this.gold *= 2;
@@ -279,7 +280,7 @@ class Enemy extends Entety{ //the enemy class should be with hp for hit points, 
             this.bonus = lvl / 2 + 5;
             this.poisonCount = 0;
             this.attack = dmg();
-            this.xp = this.lvl + rand.nextInt(15) +  4 + this.xp;
+            this.xp = this.lvl + rand.nextInt(15) +  4;
             this.gold = rand.nextInt(100) + 50;
             this.name = Color.PURPLE.get() + "Dragon" + Color.RESET.get();
             this.data = "Dragon";
@@ -316,7 +317,8 @@ class Enemy extends Entety{ //the enemy class should be with hp for hit points, 
             chance = ((Uhp * 10) / Ulvl);
         }
 
-        if (70 < (rand.nextInt(100) + chance + player.luck)){
+        //drop chance is 40% with out player luck modifier
+        if (60 > (rand.nextInt(100) + chance + player.luck)){
             Item drop = new Item();
             drop.makePotion();
             bag.put(drop.name, bag.getOrDefault(drop.name, 0) + 1);
@@ -329,6 +331,22 @@ class Enemy extends Entety{ //the enemy class should be with hp for hit points, 
         }     
         
         
+    }
+
+    public void finalBoss(){
+        this.ac = rand.nextInt(10) + 7;
+        this.hp = 18 * 9;
+        this.diceType = 8;
+        this.diceCount = 2;
+        this.bonus = 5;
+        this.poisonCount = 0;
+        this.attack = dmg();
+        this.xp = 33; // max xp giving by the dragon + 1
+        this.gold = 1000;
+        this.name = Color.CYAN.get() + "TACHO" + Color.RESET.get();
+        this.data = "Final Boss";
+        this.isBoss(true);
+        this.name = Color.BRED.get() + "Final " + Color.RESET.get() + this.name;
     }
 
     
@@ -447,7 +465,7 @@ class Weapon{ // weapons and their abilities
 
 //========== PLAYER CLAS ============
 
-class Player extends Entety{
+class Player extends Entity{
     int MAXHP;
     int MAXAC;
     int modifier;
@@ -499,7 +517,7 @@ class Player extends Entety{
         int xpNeeded = (this.lvl + 1) * (this.lvl + 2) * 5;
         return xpNeeded;
     }
-    
+   // ========= DAMAGE METHODS ============ 
     public void dicePool(){
         if(fireMage == true){
             this.dicepool.put(6, 1);
@@ -559,7 +577,7 @@ class Player extends Entety{
         return damage;
     }
 
-
+    // =============== HEALTH METHODS ===============
     public boolean isLowHealth(){
         return this.hp > 0 && this.hp <= (int)(this.MAXHP * 0.45);
     }
@@ -616,7 +634,7 @@ class Player extends Entety{
             }
         }
     }
-
+    // ============= LVL CHECKING ============ 
     public void checkLvlUp(){ // checkes lvl up each time killing an enemy
         while (this.xp >= xpNeeded()){
             this.lvl += 1;
@@ -629,6 +647,8 @@ class Player extends Entety{
             offerFeatSelection();
         }
     }
+
+    // ================= FEATS METHODS ================
 
     public void chooseFeatureFromInput(Scanner scan){
         offerFeatSelectionWithInput(scan);
@@ -773,6 +793,17 @@ class Player extends Entety{
         for(Feat f : feats.keySet()){
             System.out.println("  - " + f.name + " (x" + feats.get(f) + ")");
         }
+    }
+    
+    
+    // =============== FINAL BOSS ===============
+    
+    public Enemy finalBossFight(Enemy enemy){
+        int enemyXp = ((4 + this.lvl) + 19) * 2; //max final boss xp
+        if(this.lvl == 9 && this.xpNeeded() > enemyXp){
+            enemy.finalBoss();
+        }
+        return enemy;
     }
 
 
@@ -982,28 +1013,24 @@ public class Fight{
     public  static void tryApplyPoison(Player player, Enemy enemy){
         Random rand = new Random();
         int d100 = rand.nextInt(100) + 1;
-        if((player.canPoison == true && (d100 + player.luck) > 80) || enemy.poisoned == true ){
+        if((player.canPoison == true && (d100 + player.luck) > 80)){
             enemy.poisoned = true;
-            int hit = player.poisondmg();
-            enemy.hp -= hit;
-            System.out.println(enemy.name + Color.BGREEN.get() + " Is poisoned! and was hit by: " + hit + Color.RESET.get());
-        }if((enemy.poisonCount % (rand.nextInt(3) + 1)) == 0){
-            enemy.poisoned = false;
+            enemy.poisonCount = 3; //last 3 ticks
+            System.out.println(enemy.name + Color.BGREEN.get() + " Is poisoned!" + Color.RESET.get());
         }
     }
 
     public static void processPoison(Player player, Enemy enemy){
-        if(enemy.poisoned == true){
-            int hit = player.poisondmg();
-            enemy.hp -= hit;
-            System.out.println(enemy.name + Color.BGREEN.get() + " Is poisoned! and was hit by: " + hit + Color.RESET.get());
+        
+        if(!enemy.poisoned){
+            return;
         }
-        if(enemy.poisoned == true){
-            enemy.poisonCount += 1;
-        }else{
-            enemy.poisonCount = 0;
-        }
-        if(enemy.poisonCount % 3 == 0){
+
+        int hit = player.poisondmg();
+        enemy.hp -= hit;
+        enemy.poisonCount--;
+        System.out.println(enemy.name + Color.BGREEN.get() + " Is poisoned! and was hit by: " + hit + Color.RESET.get());
+        if(enemy.poisonCount <= 0){
             enemy.poisoned = false;
             System.out.println(enemy.name + Color.BGREEN.get() + " Is not poisoned anymore!" + Color.RESET.get());
         }
@@ -1011,8 +1038,7 @@ public class Fight{
 
 
     //METHOD FOR ATTACKING
-    public static int attack(int roll, Entety att, Entety def){ // takes in the "dice" roll, attacker attack, attacked ac, attacked hp, name of the attacker, name of the attacked and returning new attacked hp
-        Random rand = new Random();
+    public static int attack(int roll, Entity att, Entity def){ // takes in the "dice" roll, attacker attack, attacked ac, attacked hp, name of the attacker, name of the attacked and returning new attacked hp
         int crit = 20 - (att.luck / 10);
         if (((roll + att.hitBonus()) >= def.ac && def.hp > 0 && roll != 1) || roll >= (crit)){
             if(roll >= crit){
@@ -1026,7 +1052,7 @@ public class Fight{
                 System.out.println(att.name + " hit " + def.name + " for: " + Color.RED.get() + hit + Color.RESET.get() + " " + def.name + " hp is: " + def.hp + " points!");
 
             }
-            if(att instanceof Player && def instanceof Enemy){
+            if(att instanceof Player && def instanceof Enemy){ //poison machanics!
                 Player p = (Player)att;
                 Enemy e = (Enemy)def;
                 tryApplyPoison(p, e);
@@ -1106,7 +1132,11 @@ public class Fight{
             Enemy e = new Enemy(); //spawn enemy
             e.lvlBased(player.lvl);
             if(player.lvl >= 3){
-                e.isBoss();
+                e.isBoss(false);
+            }
+
+            if(player.lvl == 9){ // checking for final boss
+                player.finalBossFight(e);
             }
 
 
@@ -1131,14 +1161,15 @@ public class Fight{
             System.out.println("You rolled! " + (rollU));
             System.out.println("They rolled! " + (rollE));
             
+                //=========USER HEALING========
+            player.autoHealInFight();
+            
+
                 //=======ENEMY METHOD=======
             if(e.hp > 0){
                 player.hp = attack(rollE, e, player);
             }
-                //=========USER HEALING========
-            player.autoHealInFight();
-            
-        
+
                 //=======USER METHOD=========
         
             if(player.hp > 0){
