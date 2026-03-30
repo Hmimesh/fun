@@ -6,9 +6,11 @@ import java.util.List;
 import java.util.ArrayList;
 
 
-// In this program we are doing a random to check who will win in a psudo very simplified dnd style combat
-// @Ben Farjun
-// @hmimesh @git.hub 
+/** In this program we are doing a random to check who will win in a psudo very simplified dnd style combat
+ * @Author Ben Farjun
+ * @git.hub @Hmimesh
+ * @version 30/03/2026
+*/ 
 
 
 //=================== COLOR ENUM =====================
@@ -40,139 +42,87 @@ enum Color{ // ANSI colors wrok only on more newer terminals, if wanna use it an
     }
 }
 
-//=================== FEAT ENUM =====================
-
-enum Feat{
-    POWER("POWER", "Bonus damage +1", "damage", 1){
-        public void apply(Player p){
-            p.modifier += 1;
-            System.out.println(Color.PURPLE.get() + "You gained POWER! Damage bonus +1" + Color.RESET.get());
-        }
-    },
-    TANK("TANK", "Max HP +10", "health",  1){
-        public void apply(Player p){
-            p.MAXHP += 10;
-            p.hp += 10;
-            System.out.println(Color.CYAN.get() + "You gained TANK! Max HP +10" + Color.RESET.get());
-        }
-    },
-    LUCK("LUCK", "Chance +10%", "luck", 3){
-        public void apply(Player p){
-            p.luck += 10;
-            System.out.println(Color.YELLOW.get() + "You gained LUCK! Chance +10%" + Color.RESET.get());
-        }
-    },
-    DODGE("DODGE", "AC +1 (Armor Class)", "defense", 1){
-        public void apply(Player p){
-            p.ac += 1;
-            System.out.println(Color.GREEN.get() + "You gained DODGE! AC +1" + Color.RESET.get());
-        }
-    },
-    DICER("DICER", "One more for attack dice", "damage",  5){
-        public void apply(Player p){
-            p.diceCount += 1;
-            System.out.println(Color.ORANGE.get() + "You gained DICER! One more for attack dice" + Color.RESET.get());
-        }
-    },
-    RICH("RICH", "Get 300 gold", "gold", 1){
-        public void apply(Player p){
-            p.gold += 300;
-            System.out.println(Color.BGREEN.get() + "You gained RICH! 300 gold" + Color.RESET.get());
-        }
-    },
-    ALCHEMIST("ALCHEMIST", "Better potions", "health", 2){
-        public void apply(Player p){
-            p.potionHeal += p.MAXHP / 10;
-            System.out.println(Color.BGREEN.get() + "You gained ALCHEMIST! Better potions" + Color.RESET.get());
-        }
-    },
-    FIREMAGIC("FIRE MAGIC", "Add 1d6 of fire damage", "damage", 5){
-        public void apply(Player p){
-            p.fireMage = true;
-            p.dicePool();
-            p.fireMage = false;
-            System.out.println(Color.BRED.get() + "You gained FIRE MAGIC! Add 1d6 of fire damage" + Color.RESET.get());
-        }
-    },
-    POISON("POISON", "Add a chance of 1d4 of poison damage", "damage", 3){
-        public void apply(Player p){
-            p.poisonMage = true;
-            p.canPoison = true;
-            p.dicePool();
-            p.poisonMage = false;
-            System.out.println(Color.BGREEN.get() + "You gained POISON! Add a consistent 1d4 of poison damage" + Color.RESET.get());
-        }
-    },
-    WATERMAGE("Water Mage", "Add 1d8 of water damage", "damage", 5){
-        public void apply(Player p){
-            p.waterMage = true;
-            p.dicePool();
-            p.waterMage = false;
-            System.out.println(Color.BLUE.get() + "You gained WATER MAGE! Add 1d8 of water damage" + Color.RESET.get());
-        }
-    },
-    RECOVERY("Recovery", "heal 10% of max hp and the end of battles", "health", 2){
-        public void apply(Player p){
-            p.recovery += 10;
-            System.out.println(Color.RED.get() + "You gained RECOVERY! heal 10% of max hp and the end of battles" + Color.RESET.get());
-        }
-    };
-
-    String name;
-    String description;
-    String category;
-    int rarity;
-
-    Feat(String name, String description, String category, int rarity){
-        this.name = name;
-        this.description = description;
-        this.category = category;
-        this.rarity = rarity;
-    
-    }
-
-
-    public abstract void apply(Player p);
-
-    public void display(){
-    String rName;
-        switch(rarity){
-        case 2:
-            rName = Color.BLUE.get() + "Uncommon" + Color.RESET.get();
-            break;
-        case 3:
-            rName = Color.GREEN.get() + "Rare" + Color.RESET.get();
-            break;
-        case 4:
-            rName = Color.YELLOW.get() + "Epic" + Color.RESET.get();
-            break;
-        case 5:
-            rName = Color.PURPLE.get() + "Legendary" + Color.RESET.get();
-            break;
-        default:
-            rName = "Common";
-       
-}
-    System.out.println(Color.PURPLE.get() + name + Color.RESET.get() + " - " + description +   "(" + rName + ")" );
-}
-}
-
-
 // ================= ENTETY CLASS =================
 abstract class Entity{
-    String name;
-    int hp;
-    int ac;
-    int bonus;
-    int lvl;
-    int xp;
-    int gold;
-    int luck; 
+    private String name;
+    private int hp;
+    private int ac;
+    private int bonus;
+    private int lvl;
+    private int xp;
+    private int gold;
+    private int luck; 
 
     abstract int dmg();
 
-    int hitBonus(){
+    public int hitBonus(){
        return bonus;
+    }
+    
+    // ===== GETTERS =====
+    public String getName(){
+        return this.name;
+    }
+    
+    public int getHp(){
+        return this.hp;
+    }
+    
+    public int getAc(){
+        return this.ac;
+    }
+    
+    public int getBonus(){
+        return this.bonus;
+    }
+    
+    public int getLvl(){
+        return this.lvl;
+    }
+    
+    public int getXp(){
+        return this.xp;
+    }
+    
+    public int getGold(){
+        return this.gold;
+    }
+    
+    public int getLuck(){
+        return this.luck;
+    }
+    
+    // ===== SETTERS =====
+    public void setName(String name){
+        this.name = name;
+    }
+    
+    public void setHp(int hp){
+        this.hp = hp;
+    }
+    
+    public void setAc(int ac){
+        this.ac = ac;
+    }
+    
+    public void setBonus(int bonus){
+        this.bonus = bonus;
+    }
+    
+    public void setLvl(int lvl){
+        this.lvl = lvl;
+    }
+    
+    public void setXp(int xp){
+        this.xp = xp;
+    }
+    
+    public void setGold(int gold){
+        this.gold = gold;
+    }
+    
+    public void setLuck(int luck){
+        this.luck = luck;
     }
 
 }
@@ -183,35 +133,35 @@ abstract class Entity{
 //=================== ENEMY CLASS ====================
 
 class Enemy extends Entity{ //the enemy class should be with hp for hit points, ac = for armor class, and attack for bonusus
-    Random rand = new Random();
-    String data;
-    int attack;
-    int diceCount;
-    int diceType;
-    int potionHeal;
-    int poisonCount;
-    boolean boss;
-    boolean poisoned = false;
+    private Random rand = new Random();
+    private String data;
+    private int attack;
+    private int diceCount;
+    private int diceType;
+    private int potionHeal;
+    private int poisonCount;
+    private boolean boss;
+    private boolean poisoned = false;
 
     public boolean isBoss(boolean ending){
         int chance =  rand.nextInt(100);
         boolean isFinal = ending;
         if(chance <= 20 || isFinal == true ){
             this.boss = true;
-            this.name += Color.BRED.get() + " Boss" + Color.RESET.get();
-            this.gold *= 2;
-            this.xp *= 2;
+            this.setName(this.getName() + Color.BRED.get() + " Boss" + Color.RESET.get());
+            this.setGold(this.getGold() * 2);
+            this.setXp(this.getXp() * 2);
             this.poisonCount = 0;
-            this.ac += 2;
+            this.setAc(this.getAc() + 2);
             this.diceCount += 1;
-            this.luck += 10;
-            this.hp += 5 * ((this.lvl / 2) + 1) ;
-            this.bonus += rand.nextInt(5) + 1;
-            if((rand.nextInt((100) + 1) - (this.lvl * 5) < 10 ) && this.lvl > 6){
-                this.name = Color.CYAN.get() + "Legendary " + Color.RESET.get() + this.name;
-                this.bonus += 1;
-                this.ac += 1;
-                this.hp += 10;
+            this.setLuck(this.getLuck() + 10);
+            this.setHp(this.getHp() + 5 * ((this.getLvl() / 2) + 1));
+            this.setBonus(this.getBonus() + rand.nextInt(5) + 1);
+            if((rand.nextInt((100) + 1) - (this.getLvl() * 5) < 10 ) && this.getLvl() > 6){
+                this.setName(Color.CYAN.get() + "Legendary " + Color.RESET.get() + this.getName());
+                this.setBonus(this.getBonus() + 1);
+                this.setAc(this.getAc() + 1);
+                this.setHp(this.getHp() + 10);
             }
             return true;
         }else{
@@ -225,80 +175,84 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
         for (int i = 0; i < this.diceCount; i++){
             damage += rand.nextInt(this.diceType) + 1;
         }
-        damage += this.bonus;
+        damage += this.getBonus();
         return damage;
     }
 
     public void lvlBased(int lvl){ //lvl is user lvl
         
-        this.hp = rand.nextInt(lvl * 20 - lvl * 5 + 1) + lvl * 5;
-        this.lvl = rand.nextInt(4) + lvl;
+        this.setHp(rand.nextInt(lvl * 20 - lvl * 5 + 1) + lvl * 5);
+        this.setLvl(rand.nextInt(4) + lvl);
         int minXp = lvl;
 
-        int maxBonus = Math.max(1, this.lvl / 2);
+        int maxBonus = Math.max(1, this.getLvl() / 2);
         
-        if(this.hp <= lvl * 8 && this.hp >= lvl * 5){
-            this.ac = 4 + lvl;
+        if(this.getHp() <= lvl * 8 && this.getHp() >= lvl * 5){
+            this.setAc(4 + lvl);
             this.diceType = 4;
             this.diceCount = 1 + ((lvl / 4));
-            this.bonus = lvl / 3;
+            this.setBonus(lvl / 3);
             this.poisonCount = 0;
             this.attack = dmg();
-            this.xp = this.lvl / 4 + rand.nextInt(5) + 1;
-            this.gold =  rand.nextInt(10) + this.xp;
-            this.name = Color.BLUE.get() + "Slime" + Color.RESET.get();
+            this.setXp(this.getLvl() / 4 + rand.nextInt(5) + 1);
+            this.setGold(rand.nextInt(10) + this.getXp());
+            this.setName(Color.BLUE.get() + "Slime" + Color.RESET.get());
             this.data = "Slime";
         }
-        else if(this.hp > lvl * 8 && this.hp <= 12 * lvl){
-            this.ac = rand.nextInt((7 + lvl) - (4 + lvl) + 1) + (4 + lvl);
+        else if(this.getHp() > lvl * 8 && this.getHp() <= 12 * lvl){
+            this.setAc(rand.nextInt((7 + lvl) - (4 + lvl) + 1) + (4 + lvl));
             this.diceType = 6;
             this.diceCount = 1 + ((lvl / 4));
-            this.bonus = rand.nextInt((maxBonus)) + 1;
+            this.setBonus(rand.nextInt((maxBonus)) + 1);
             this.poisonCount = 0;
             this.attack = dmg();
-            this.xp = this.lvl / 3 + rand.nextInt(6) + 2;
-            this.gold = rand.nextInt(20) + this.xp;
-            this.name = Color.RED.get() + "Wolf" + Color.RESET.get();
+            this.setXp(this.getLvl() / 3 + rand.nextInt(6) + 2);
+            this.setGold(rand.nextInt(20) + this.getXp());
+            this.setName(Color.RED.get() + "Wolf" + Color.RESET.get());
             this.data = "Wolf";
         }
-        else if(this.hp > 12 * lvl && this.hp <= 17 * lvl){
-            this.ac = rand.nextInt((8 + lvl) - (4 + lvl) + 1) + (4 + lvl);
-            this.diceType = 8;
+        else if(this.getHp() > 12 * lvl && this.getHp() <= 17 * lvl){
+            this.setAc(rand.nextInt((8 + lvl) - (4 + lvl) + 1) + (4 + lvl));
+            if(lvl <= 2){
+                this.diceType = 6;
+            }else{
+                this.diceType = 8;
+            }    
             this.diceCount = 1 + ((lvl / 4));
-            this.bonus = rand.nextInt(maxBonus) + 3;
+            this.setBonus(rand.nextInt(maxBonus) + 3);
             this.poisonCount = 0;
             this.attack = dmg();
-            this.xp = this.lvl / 2 + rand.nextInt(7) + 3;
-            this.gold = rand.nextInt(40) + 1 + this.xp;
-            this.name = Color.BGREEN.get() + "Goblin" + Color.RESET.get();
+            this.setXp(this.getLvl() / 2 + rand.nextInt(7) + 3);
+            this.setGold(rand.nextInt(40) + 1 + this.getXp());
+            this.setName(Color.BGREEN.get() + "Goblin" + Color.RESET.get());
             this.data = "Goblin";
         }
-        else if(this.hp > 17 * lvl && this.hp <= 20 * lvl && lvl >= 2){
-            this.ac = rand.nextInt((10 + lvl) - (6 + lvl) + 1) + (6 + lvl);
+        else if(this.getHp() > 17 * lvl && this.getHp() <= 20 * lvl && lvl >= 2){
+            this.setAc(rand.nextInt((10 + lvl) - (6 + lvl) + 1) + (6 + lvl));
             this.diceType = 6;
             this.diceCount = 2 + ((lvl / 4));
-            this.bonus = lvl / 2 + 5;
+            this.setBonus(lvl / 2 + 5);
             this.poisonCount = 0;
             this.attack = dmg();
-            this.xp = this.lvl + rand.nextInt(15) +  4;
-            this.gold = rand.nextInt(100) + 50;
-            this.name = Color.PURPLE.get() + "Dragon" + Color.RESET.get();
+            this.setXp(this.getLvl() + rand.nextInt(15) +  4);
+            this.setGold(rand.nextInt(100) + 50);
+            this.setName(Color.PURPLE.get() + "Dragon" + Color.RESET.get());
             this.data = "Dragon";
         }else{
-            this.hp = 10;
-            this.ac = 2 + lvl;
+            this.setHp(10);
+            this.setAc(2 + lvl);
             this.diceType = 4;
             this.diceCount = 1;
             this.poisonCount = 0;
-            this.bonus = 1;
+            this.setBonus(1);
             this.attack = dmg();
-            this.xp = 1;
-            this.gold = 1;
-            this.name = Color.YELLOW.get() + "RAT" + Color.RESET.get();
+            this.setXp(1);
+            this.setGold(1);
+            this.setName(Color.YELLOW.get() + "RAT" + Color.RESET.get());
             this.data = "Rat";
         }
-        if (this.xp <= 0){
-            this.xp = minXp;
+        if (this.getXp() <= 0){
+            this.setXp(minXp);
         }
     }
 
@@ -317,50 +271,114 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
             chance = ((Uhp * 10) / Ulvl);
         }
 
-        //drop chance is 40% with out player luck modifier
-        if (60 > (rand.nextInt(100) + chance + player.luck)){
+        //drop chance is 30% with out player luck modifier
+        if (30 > (rand.nextInt(100) + chance + player.getLuck())){
             Item drop = new Item();
             drop.makePotion();
-            bag.put(drop.name, bag.getOrDefault(drop.name, 0) + 1);
-            System.out.println("You found a " + drop.name);
+            bag.put(drop.getName(), bag.getOrDefault(drop.getName(), 0) + 1);
+            System.out.println("You found a " + drop.getName());
         }else if(this.boss == true){ //if boss alwats get between 1 - 2 rewards
             Item drop = new Item();
             drop.makePotion();
-            bag.put(drop.name, bag.getOrDefault(drop.name, 0) + 1);
-            System.out.println("You found a " + drop.name);
+            bag.put(drop.getName(), bag.getOrDefault(drop.getName(), 0) + 1);
+            System.out.println("You found a " + drop.getName());
         }     
         
         
     }
 
     public void finalBoss(){
-        this.ac = rand.nextInt(10) + 7;
-        this.hp = 18 * 9;
+        this.setAc(this.rand.nextInt(10) + 7);
+        this.setHp(18 * 9);
         this.diceType = 8;
         this.diceCount = 2;
-        this.bonus = 5;
+        this.setBonus(5);
         this.poisonCount = 0;
         this.attack = dmg();
-        this.xp = 33; // max xp giving by the dragon + 1
-        this.gold = 1000;
-        this.name = Color.CYAN.get() + "TACHO" + Color.RESET.get();
+        this.setXp(33); // max xp giving by the dragon + 1
+        this.setGold(1000);
+        this.setName("TACHO");
         this.data = "Final Boss";
         this.isBoss(true);
-        this.name = Color.BRED.get() + "Final " + Color.RESET.get() + this.name;
+        String bossName = Color.BRED.get() + "Final " + Color.RESET.get() + Color.CYAN.get() + "TACHO" + Color.RESET.get();
+        this.setName(bossName);
     }
 
+    // ===== GETTERS =====
+    public String getData(){
+        return this.data;
+    }
     
+    public int getAttack(){
+        return this.attack;
+    }
+    
+    public int getDiceCount(){
+        return this.diceCount;
+    }
+    
+    public int getDiceType(){
+        return this.diceType;
+    }
+    
+    public int getPotionHeal(){
+        return this.potionHeal;
+    }
+    
+    public int getPoisonCount(){
+        return this.poisonCount;
+    }
+    
+    public boolean isBossEnemy(){
+        return this.boss;
+    }
+    
+    public boolean isPoisoned(){
+        return this.poisoned;
+    }
+    
+    // ===== SETTERS =====
+    public void setData(String data){
+        this.data = data;
+    }
+    
+    public void setAttack(int attack){
+        this.attack = attack;
+    }
+    
+    public void setDiceCount(int diceCount){
+        this.diceCount = diceCount;
+    }
+    
+    public void setDiceType(int diceType){
+        this.diceType = diceType;
+    }
+    
+    public void setPotionHeal(int potionHeal){
+        this.potionHeal = potionHeal;
+    }
+    
+    public void setPoisonCount(int poisonCount){
+        this.poisonCount = poisonCount;
+    }
+    
+    public void setBoss(boolean boss){
+        this.boss = boss;
+    }
+    
+    public void setPoisoned(boolean poisoned){
+        this.poisoned = poisoned;
+    }
 }
-
 //============== WEAPON CLASS ==================
 
 class Weapon{ // weapons and their abilities
-    String name;
-    int diceCount; //number of dices
-    int diceType; // type of dice
-    int data; // ID for the damage stats
-    int bonus;
-    int price;
+    private String name;
+    private int diceCount; //number of dices
+    private int diceType; // type of dice
+    private int data; // ID for the damage stats
+    private int bonus;
+    private int price;
 
 
     public void update(int dmg, int playerlvl, Player player){  // will be called when buying or first opening the game
@@ -385,12 +403,32 @@ class Weapon{ // weapons and their abilities
             this.diceType = 6;
         }
         this.price = this.data * 10;
-        checkBonusDice(playerlvl, player.luck);
-        enhancerWep(playerlvl, player.luck);
+        checkBonusDice(playerlvl, player.getLuck());
+        enhancerWep(playerlvl, player.getLuck());
         
 
     }
 
+    // ===== GETTERS =====
+    public String getName(){
+        return this.name;
+    }
+    
+    public int getDiceCount(){
+        return this.diceCount;
+    }
+    
+    public int getDiceType(){
+        return this.diceType;
+    }
+    
+    public int getBonus(){
+        return this.bonus;
+    }
+    
+    public int getPrice(){
+        return this.price;
+    }
 
     private void enhancerWep(int playerlvl , int luck){
         Random rand = new Random();
@@ -463,63 +501,302 @@ class Weapon{ // weapons and their abilities
     }
 }
 
+//=================== FEAT ENUM =====================
+
+enum Feat{
+    POWER("POWER", "Bonus damage +1", "damage", 1){
+        public void apply(Player p){
+            p.setModifier(p.getModifier() + 1);
+            System.out.println(Color.PURPLE.get() + "You gained POWER! Damage bonus +1" + Color.RESET.get());
+        }
+    },
+    TANK("TANK", "Max HP +10", "health",  1){
+        public void apply(Player p){
+            p.setMaxHP(p.getMaxHP() + 10);
+            p.setHp(p.getHp() + 10);
+            System.out.println(Color.CYAN.get() + "You gained TANK! Max HP +10" + Color.RESET.get());
+        }
+    },
+    LUCK("LUCK", "Chance +10%", "luck", 3){
+        public void apply(Player p){
+            p.setLuck(p.getLuck() + 10);
+            System.out.println(Color.YELLOW.get() + "You gained LUCK! Chance +10%" + Color.RESET.get());
+        }
+    },
+    DODGE("DODGE", "AC +1 (Armor Class)", "defense", 1){
+        public void apply(Player p){
+            p.setAc(p.getAc() + 1);
+            System.out.println(Color.GREEN.get() + "You gained DODGE! AC +1" + Color.RESET.get());
+        }
+    },
+    DICER("DICER", "One more for attack dice", "damage",  5){
+        public void apply(Player p){
+            p.setDiceCount(p.getDiceCount() + 1);
+            System.out.println(Color.ORANGE.get() + "You gained DICER! One more for attack dice" + Color.RESET.get());
+        }
+    },
+    RICH("RICH", "Get 300 gold", "gold", 1){
+        public void apply(Player p){
+            p.setGold(p.getGold() + 300);
+            System.out.println(Color.BGREEN.get() + "You gained RICH! 300 gold" + Color.RESET.get());
+        }
+    },
+    ALCHEMIST("ALCHEMIST", "Better potions", "health", 2){
+        public void apply(Player p){
+            p.setPotionHeal(p.getPotionHeal() + p.getMaxHP() / 10);
+            System.out.println(Color.BGREEN.get() + "You gained ALCHEMIST! Better potions" + Color.RESET.get());
+        }
+    },
+    FIREMAGIC("FIRE MAGIC", "Add 1d6 of fire damage", "damage", 5){
+        public void apply(Player p){
+            p.setFireMage(true);
+            p.dicePool();
+            p.setFireMage(false);
+            System.out.println(Color.BRED.get() + "You gained FIRE MAGIC! Add 1d6 of fire damage" + Color.RESET.get());
+        }
+    },
+    POISON("POISON", "Add a chance of 1d4 of poison damage", "damage", 3){
+        public void apply(Player p){
+            p.setPoisonMage(true);
+            p.setCanPoison(true);
+            p.dicePool();
+            p.setPoisonMage(false);
+            System.out.println(Color.BGREEN.get() + "You gained POISON! Add a consistent 1d4 of poison damage" + Color.RESET.get());
+        }
+    },
+    WATERMAGE("Water Mage", "Add 1d8 of water damage", "damage", 5){
+        public void apply(Player p){
+            p.setWaterMage(true);
+            p.dicePool();
+            p.setWaterMage(false);
+            System.out.println(Color.BLUE.get() + "You gained WATER MAGE! Add 1d8 of water damage" + Color.RESET.get());
+        }
+    },
+    RECOVERY("Recovery", "heal 10% of max hp and the end of battles", "health", 2){
+        public void apply(Player p){
+            p.setRecovery(p.getRecovery() + 10);
+            System.out.println(Color.RED.get() + "You gained RECOVERY! heal 10% of max hp and the end of battles" + Color.RESET.get());
+        }
+    };
+
+    String name;
+    String description;
+    String category;
+    int rarity;
+
+    Feat(String name, String description, String category, int rarity){
+        this.name = name;
+        this.description = description;
+        this.category = category;
+        this.rarity = rarity;
+    
+    }
+
+
+    public abstract void apply(Player p);
+
+    public void display(){
+    String rName;
+        switch(rarity){
+        case 2:
+            rName = Color.BLUE.get() + "Uncommon" + Color.RESET.get();
+            break;
+        case 3:
+            rName = Color.GREEN.get() + "Rare" + Color.RESET.get();
+            break;
+        case 4:
+            rName = Color.YELLOW.get() + "Epic" + Color.RESET.get();
+            break;
+        case 5:
+            rName = Color.PURPLE.get() + "Legendary" + Color.RESET.get();
+            break;
+        default:
+            rName = "Common";
+       
+}
+    System.out.println(Color.PURPLE.get() + name + Color.RESET.get() + " - " + description +   "(" + rName + ")" );
+}
+}
+
 //========== PLAYER CLAS ============
 
 class Player extends Entity{
-    int MAXHP;
-    int MAXAC;
-    int modifier;
-    Weapon wep;
+    private int MAXHP;
+    private int MAXAC;
+    private int modifier;
+    private Weapon wep;
     // =========== Booleans feats ==========
-    boolean fireMage = false;
-    boolean waterMage = false;
-    boolean poisonMage = false;
-    boolean canPoison = false;
+    private boolean fireMage = false;
+    private boolean waterMage = false;
+    private boolean poisonMage = false;
+    private boolean canPoison = false;
 
     // ========== Booleans feats end =========
-    int potionHeal;
-    int diceCount;
-    int recovery;
-    int attack;
-    Item item; // holder for potions for easy accsess for the bag
-    Armor arm;
+    private int potionHeal;
+    private int diceCount;
+    private int recovery;
+    private int attack;
+    private Item item; // holder for potions for easy accsess for the bag
+    private Armor arm;
 
-    Map<String, Integer> bag = new HashMap<>(); //bag for diff potions
-    Map<Feat, Integer> feats = new HashMap<>(); //track acquired feats and count
-    Map<Integer, Integer> dicepool = new HashMap<>();
-    Map<Integer, Integer> poisonpool= new HashMap<>();
+    private Map<String, Integer> bag = new HashMap<>(); //bag for diff potions
+    private Map<Feat, Integer> feats = new HashMap<>(); //track acquired feats and count
+    private Map<Integer, Integer> dicepool = new HashMap<>();
+    private Map<Integer, Integer> poisonpool= new HashMap<>();
 
 
-    Random rand = new Random();
+    private Random rand = new Random();
 
 
     public void newPlayer(String newName){ //when starting new game init for the user
-        this.name = Color.ORANGE.get() + newName + Color.RESET.get();
-        this.lvl = 1;
-        this.xp = 0;
-        this.MAXHP = rand.nextInt(6) + 1 + 30;
-        this.hp = this.MAXHP;
-        this.luck = 0;
+        this.setName(Color.ORANGE.get() + newName + Color.RESET.get());
+        this.setLvl(1);
+        this.setXp(0);
+        this.MAXHP = rand.nextInt(6) + 1 + 40;
+        this.setHp(this.MAXHP);
+        this.setLuck(0);
         this.arm = new Armor();
         this.diceCount = 0;
-        this.arm.updateArmor(this.lvl, this);
-        this.ac = 10 + this.arm.ac;
+        this.arm.updateArmor(this.getLvl(), this);
+        this.setAc(10 + this.arm.getAc());
         this.wep = new Weapon();
         this.item = new Item();
-        this.gold = rand.nextInt(100 - (this.arm.price) - this.wep.price) + 26;    
+        this.setGold(rand.nextInt(100 - (this.arm.getPrice()) + this.wep.getPrice()) + 26);    
         item.makePotion();
-        this.bag.put(this.item.name, bag.getOrDefault(this.item.name, 0) + 1);
-        wep.update(rand.nextInt(4) + 1, this.lvl, this);
+        this.bag.put(this.item.getName(), bag.getOrDefault(this.item.getName(), 0) + 1);
+        wep.update(rand.nextInt(4) + 1, this.getLvl(), this);
         this.attack = dmg();
     }
 
+    // ===== GETTERS =====
+    public int getMaxHP(){
+        return this.MAXHP;
+    }
+    
+    public int getMaxAC(){
+        return this.MAXAC;
+    }
+    
+    public int getModifier(){
+        return this.modifier;
+    }
+    
+    public Weapon getWeapon(){
+        return this.wep;
+    }
+    
+    public boolean isFireMage(){
+        return this.fireMage;
+    }
+    
+    public boolean isWaterMage(){
+        return this.waterMage;
+    }
+    
+    public boolean isPoisonMage(){
+        return this.poisonMage;
+    }
+    
+    public boolean canCastPoison(){
+        return this.canPoison;
+    }
+    
+    public int getPotionHeal(){
+        return this.potionHeal;
+    }
+    
+    public int getDiceCount(){
+        return this.diceCount;
+    }
+    
+    public int getRecovery(){
+        return this.recovery;
+    }
+    
+    public int getAttack(){
+        return this.attack;
+    }
+    
+    public Item getItem(){
+        return this.item;
+    }
+    
+    public Armor getArmor(){
+        return this.arm;
+    }
+    
+    public Map<String, Integer> getBag(){
+        return this.bag;
+    }
+    
+    public Map<Feat, Integer> getFeats(){
+        return this.feats;
+    }
+    
+    // ===== SETTERS =====
+    public void setMaxHP(int maxhp){
+        this.MAXHP = maxhp;
+    }
+    
+    public void setMaxAC(int maxac){
+        this.MAXAC = maxac;
+    }
+    
+    public void setModifier(int modifier){
+        this.modifier = modifier;
+    }
+    
+    public void setWeapon(Weapon wep){
+        this.wep = wep;
+    }
+    
+    public void setFireMage(boolean fireMage){
+        this.fireMage = fireMage;
+    }
+    
+    public void setWaterMage(boolean waterMage){
+        this.waterMage = waterMage;
+    }
+    
+    public void setPoisonMage(boolean poisonMage){
+        this.poisonMage = poisonMage;
+    }
+    
+    public void setCanPoison(boolean canPoison){
+        this.canPoison = canPoison;
+    }
+    
+    public void setPotionHeal(int potionHeal){
+        this.potionHeal = potionHeal;
+    }
+    
+    public void setDiceCount(int diceCount){
+        this.diceCount = diceCount;
+    }
+    
+    public void setRecovery(int recovery){
+        this.recovery = recovery;
+    }
+    
+    public void setAttack(int attack){
+        this.attack = attack;
+    }
+    
+    public void setItem(Item item){
+        this.item = item;
+    }
+    
+    public void setArmor(Armor arm){
+        this.arm = arm;
+    }
+
     public int xpNeeded(){ // for lvl ups
-        int xpNeeded = (this.lvl + 1) * (this.lvl + 2) * 5;
+        int xpNeeded = (this.getLvl() + 1) * (this.getLvl() + 2) * 5;
         return xpNeeded;
     }
    // ========= DAMAGE METHODS ============ 
     public void dicePool(){
-        if(fireMage == true){
+        if(this.fireMage == true){
             this.dicepool.put(6, 1);
         }else if(this.waterMage == true){
             this.dicepool.put(8, 1);
@@ -562,24 +839,24 @@ class Player extends Entity{
     }
 
     @Override
-    int hitBonus() {
-        return this.modifier + this.wep.bonus;
+    public int hitBonus() {
+        return this.modifier + this.wep.getBonus();
     }
 
 
     public int dmg(){ // main damage algo
         int damage = 0;;
-        for (int i = 0; i < wep.diceCount + this.diceCount; i++){
-            damage += rand.nextInt(wep.diceType) + 1;
+        for (int i = 0; i < this.wep.getDiceCount() + this.diceCount; i++){
+            damage += rand.nextInt(this.wep.getDiceType()) + 1;
         }
         damage += rollExtraDice();
-        damage += wep.bonus + this.modifier;
+        damage += this.wep.getBonus() + this.modifier;
         return damage;
     }
 
     // =============== HEALTH METHODS ===============
     public boolean isLowHealth(){
-        return this.hp > 0 && this.hp <= (int)(this.MAXHP * 0.45);
+        return this.getHp() > 0 && this.getHp() <= (int)(this.MAXHP * 0.45);
     }
 
     public boolean hasAnyPotion(){
@@ -598,9 +875,9 @@ class Player extends Entity{
             int count = bag.getOrDefault(potion, 0);
             if (count > 0){
                 bag.put(potion, count - 1);
-                this.hp += heals[i];
-                if (this.hp > this.MAXHP){
-                    this.hp = this.MAXHP;
+                this.setHp(this.getHp() + heals[i]);
+                if (this.getHp() > this.MAXHP){
+                    this.setHp(this.MAXHP);
                 }
                 return potion;
             }
@@ -612,38 +889,38 @@ class Player extends Entity{
         if (this.isLowHealth()){
             if (this.hasAnyPotion()){
                 String used = useBestPotion();
-                System.out.println("You used a " + Color.RED.get() + used + Color.RESET.get() + ". HP is now " + Color.BLUE.get() + (String.valueOf(this.hp)) + Color.RESET.get() + "/" + Color.GREEN.get() + (String.valueOf(this.MAXHP)) + Color.RESET.get() + ".");
+                System.out.println("You used a " + Color.RED.get() + used + Color.RESET.get() + ". HP is now " + Color.BLUE.get() + (String.valueOf(this.getHp())) + Color.RESET.get() + "/" + Color.GREEN.get() + (String.valueOf(this.MAXHP)) + Color.RESET.get() + ".");
             } else {
                 System.out.println(Color.RED.get() + "No potions!" + Color.RESET.get());
             }
-        }if (this.hp <= 0 && this.bag.getOrDefault("revive", 0) > 0){
-            this.hp = this.MAXHP / 2;
+        }if (this.getHp() <= 0 && this.bag.getOrDefault("revive", 0) > 0){
+            this.setHp(this.MAXHP / 2);
             this.bag.put("revive", this.bag.get("revive") - 1);
-            System.out.println("You are not dead yet! " + Color.RED.get() + "used a revive" + Color.RESET.get() + ". HP is now " + Color.BLUE.get() + (String.valueOf(this.hp)) + Color.RESET.get() + "/" + Color.GREEN.get() + (String.valueOf(this.MAXHP)) + Color.RESET.get() + ".");
+            System.out.println("You are not dead yet! " + Color.RED.get() + "used a revive" + Color.RESET.get() + ". HP is now " + Color.BLUE.get() + (String.valueOf(this.getHp())) + Color.RESET.get() + "/" + Color.GREEN.get() + (String.valueOf(this.MAXHP)) + Color.RESET.get() + ".");
         }
     }
 
     public void recoverAfterBattle(){ 
-        if (this.hp < this.MAXHP){
+        if (this.getHp() < this.MAXHP){
             int heal = (int)(this.MAXHP * (this.recovery / 100.0));
-            this.hp = Math.min(this.hp + heal, this.MAXHP);
+            this.setHp(Math.min(this.getHp() + heal, this.MAXHP));
             if(heal == 0){
-                System.out.println("Current health: " + this.hp + "/" + this.MAXHP + ".");
+                System.out.println("Current health: " + this.getHp() + "/" + this.MAXHP + ".");
             }else{
-            System.out.println("You recovered " + heal + " HP after battle. HP is now " + this.hp + "/" + this.MAXHP + ".");
+            System.out.println("You recovered " + heal + " HP after battle. HP is now " + this.getHp() + "/" + this.MAXHP + ".");
             }
         }
     }
     // ============= LVL CHECKING ============ 
     public void checkLvlUp(){ // checkes lvl up each time killing an enemy
-        while (this.xp >= xpNeeded()){
-            this.lvl += 1;
-            System.out.println(Color.GREEN.get() + "lvl Up! you are lvl " + String.valueOf(this.lvl) + Color.RESET.get());
-            this.MAXHP += rand.nextInt(10) + 1 + this.lvl;
-            this.hp = this.MAXHP;
+        while (this.getXp() >= xpNeeded()){
+            this.setLvl(this.getLvl() + 1);
+            System.out.println(Color.GREEN.get() + "lvl Up! you are lvl " + String.valueOf(this.getLvl()) + Color.RESET.get());
+            this.MAXHP += rand.nextInt(10) + 1 + this.getLvl();
+            this.setHp(this.MAXHP);
             System.out.println("Your max hp is now " + this.MAXHP);
-            this.modifier = (this.lvl / 2);
-            System.out.println("Your ac is " + this.ac);
+            this.modifier = (this.getLvl() / 2);
+            System.out.println("Your ac is " + this.getAc());
             offerFeatSelection();
         }
     }
@@ -799,8 +1076,8 @@ class Player extends Entity{
     // =============== FINAL BOSS ===============
     
     public Enemy finalBossFight(Enemy enemy){
-        int enemyXp = ((4 + this.lvl) + 19) * 2; //max final boss xp
-        if(this.lvl == 9 && this.xpNeeded() <= enemyXp){
+        int enemyXp = ((4 + this.getLvl()) + 19) * 2; //max final boss xp
+        if(this.getLvl() == 9 && this.xpNeeded() <= enemyXp){
             enemy.finalBoss();
         }
         return enemy;
@@ -813,10 +1090,10 @@ class Player extends Entity{
 //=========== ITEM CLASS ==========
 
 class Item{ // potions, nothing else
-    String name;
-    int price;
-    int heal;
-    Random rand = new Random();
+    private String name;
+    private int price;
+    private int heal;
+    private Random rand = new Random();
     
     public void makePotion(){ //for shops and enemies 
         int chance = rand.nextInt(20) + 1;
@@ -845,16 +1122,29 @@ class Item{ // potions, nothing else
             this.heal = 1;
         }
     }
+    
+    // ===== GETTERS =====
+    public String getName(){
+        return this.name;
+    }
+    
+    public int getPrice(){
+        return this.price;
+    }
+    
+    public int getHeal(){
+        return this.heal;
+    }
 
 }
 
 //============= ARMOR CLASS =============
 
 class Armor{ // same logic as wep except for protaction
-    String name;
-    int ac;
-    int price;
-    Random rand = new Random();
+    private String name;
+    private int ac;
+    private int price;
+    private Random rand = new Random();
 
     public void updateArmor(int playerlvl, Player player){
     int chance = rand.nextInt(6) + 1;
@@ -882,7 +1172,20 @@ class Armor{ // same logic as wep except for protaction
         this.name = "robe";
         this.ac = 0;
         this.price = 5;
-    }__enhancerArm(playerlvl, player.luck);
+    }__enhancerArm(playerlvl, player.getLuck());
+    }
+
+    // ===== GETTERS =====
+    public String getName(){
+        return this.name;
+    }
+    
+    public int getAc(){
+        return this.ac;
+    }
+    
+    public int getPrice(){
+        return this.price;
     }
 
     private void __enhancerArm(int playerlvl, int luck){ //add incentives for later games to use money other than potions
@@ -931,24 +1234,37 @@ class Armor{ // same logic as wep except for protaction
 //============== SHOP CLASS ==============
 
 class Shop{ // Can be accesed at the end of fights
-    Item item = new Item();
-    Weapon wep = new Weapon();
-    Armor arm = new Armor();
+    private Item item = new Item();
+    private Weapon wep = new Weapon();
+    private Armor arm = new Armor();
+    
+    // ===== GETTERS =====
+    public Item getItem(){
+        return this.item;
+    }
+    
+    public Weapon getWeapon(){
+        return this.wep;
+    }
+    
+    public Armor getArmor(){
+        return this.arm;
+    }
 
 
     public int canBuyWeapon(int gold, Weapon wepName, Scanner scan, Player user){ // check if user can buy wep
-        System.out.println("There is " + wepName.name + " its price is " + wepName.price);
+        System.out.println("There is " + wepName.getName() + " its price is " + wepName.getPrice());
         System.out.println("You have " + gold);
-        if(gold >= wepName.price){
-            System.out.println("Do you want to buy this weapon? " + wepName.name + " y/n");
-            System.out.println("Damage die: " + wep.diceCount + "d" + wep.diceType + "+" + " " + wep.bonus);
+        if(gold >= wepName.getPrice()){
+            System.out.println("Do you want to buy this weapon? " + wepName.getName() + " y/n");
+            System.out.println("Damage die: " + wepName.getDiceCount() + "d" + wepName.getDiceType() + "+" + " " + wepName.getBonus());
             String input1 = scan.next();
             if(input1.equals("y") || input1.equals("yes")){
-                gold -= wepName.price;
-                System.out.println("You bought " + wepName.name);
-                user.attack = 0;
-                user.wep = wepName;
-                user.attack = user.dmg();
+                gold -= wepName.getPrice();
+                System.out.println("You bought " + wepName.getName());
+                user.setAttack(0);
+                user.setWeapon(wepName);
+                user.setAttack(user.dmg());
             }else{
                 System.out.println("You didnt buy it!");
             }
@@ -959,16 +1275,16 @@ class Shop{ // Can be accesed at the end of fights
     }
 
     public int canBuyItem(int gold, Item potion, Scanner scan, Player user){ // same as before but for item
-        System.out.println("There is " + potion.name + " its price is " + potion.price);
+        System.out.println("There is " + potion.getName() + " its price is " + potion.getPrice());
         System.out.println("You have " + gold);
-        if(gold >= potion.price){
-            System.out.println("Do you want to buy this potion? " + potion.name + " y/n");
-            System.out.println("Heal for: " + potion.heal);
+        if(gold >= potion.getPrice()){
+            System.out.println("Do you want to buy this potion? " + potion.getName() + " y/n");
+            System.out.println("Heal for: " + potion.getHeal());
             String input1 = scan.next();
             if(input1.equals("y") || input1.equals("yes")){
-                gold -= potion.price;
-                System.out.println("You bought " + potion.name);
-                user.bag.put(potion.name, user.bag.getOrDefault(potion.name, 0) + 1);
+                gold -= potion.getPrice();
+                System.out.println("You bought " + potion.getName());
+                user.getBag().put(potion.getName(), user.getBag().getOrDefault(potion.getName(), 0) + 1);
             }else{
                 System.out.println("You didnt buy it!");
             }
@@ -979,21 +1295,21 @@ class Shop{ // Can be accesed at the end of fights
     }    
 
     public int canBuyArmor(int gold, Armor armName, Scanner scan, Player user){ // same as before but for armor
-        if (this.arm.ac == 0){
-            this.arm.ac += 1;
+        if (this.arm.getAc() == 0){
+            this.arm = new Armor();
         }
-        System.out.println("There is " + armName.name + " its price is " + Color.YELLOW.get() + (String.valueOf(armName.price)) + Color.RESET.get());
+        System.out.println("There is " + armName.getName() + " its price is " + Color.YELLOW.get() + (String.valueOf(armName.getPrice())) + Color.RESET.get());
         System.out.println("You have " + Color.YELLOW.get() + (String.valueOf(gold) + Color.RESET.get()));
-        if(gold >= armName.price){
-            System.out.println("Do you want to buy this armor? " + armName.name + " y/n");
-            System.out.println("Armor class: " + armName.ac);
+        if(gold >= armName.getPrice()){
+            System.out.println("Do you want to buy this armor? " + armName.getName() + " y/n");
+            System.out.println("Armor class: " + armName.getAc());
             String input1 = scan.next();
             if(input1.equals("y") || input1.equals("yes")){
-                gold -= armName.price;
-                System.out.println("You bought " + armName.name);
-                user.ac -= user.arm.ac; 
-                user.arm = armName;
-                user.ac += armName.ac;
+                gold -= armName.getPrice();
+                System.out.println("You bought " + armName.getName());
+                user.setAc(user.getAc() - user.getArmor().getAc()); 
+                user.setArmor(armName);
+                user.setAc(user.getAc() + armName.getAc());
             }else{
                 System.out.println("You didnt buy it!");
             }
@@ -1009,47 +1325,47 @@ class Shop{ // Can be accesed at the end of fights
 
 public class Fight{
     //=============== POISON METHODS ==================
-    Random rand = new Random(); // random number generator ie rolls 
-    public  static void tryApplyPoison(Player player, Enemy enemy){
+    private Random rand = new Random(); // random number generator ie rolls 
+    public static void tryApplyPoison(Player player, Enemy enemy){
         Random rand = new Random();
         int d100 = rand.nextInt(100) + 1;
-        if((player.canPoison == true && (d100 + player.luck) > 80)){
-            enemy.poisoned = true;
-            enemy.poisonCount = 3; //last 3 ticks
-            System.out.println(enemy.name + Color.BGREEN.get() + " Is poisoned!" + Color.RESET.get());
+        if((player.canCastPoison() == true && (d100 + player.getLuck()) > 80)){
+            enemy.setPoisoned(true);
+            enemy.setPoisonCount(3); //last 3 ticks
+            System.out.println(enemy.getName() + Color.BGREEN.get() + " Is poisoned!" + Color.RESET.get());
         }
     }
 
     public static void processPoison(Player player, Enemy enemy){
         
-        if(!enemy.poisoned){
+        if(!enemy.isPoisoned()){
             return;
         }
 
         int hit = player.poisondmg();
-        enemy.hp -= hit;
-        enemy.poisonCount--;
-        System.out.println(enemy.name + Color.BGREEN.get() + " Is poisoned! and was hit by: " + hit + Color.RESET.get());
-        if(enemy.poisonCount <= 0){
-            enemy.poisoned = false;
-            System.out.println(enemy.name + Color.BGREEN.get() + " Is not poisoned anymore!" + Color.RESET.get());
+        enemy.setHp(enemy.getHp() - hit);
+        enemy.setPoisonCount(enemy.getPoisonCount() - 1);
+        System.out.println(enemy.getName() + Color.BGREEN.get() + " Is poisoned! and was hit by: " + hit + Color.RESET.get());
+        if(enemy.getPoisonCount() <= 0){
+            enemy.setPoisoned(false);
+            System.out.println(enemy.getName() + Color.BGREEN.get() + " Is not poisoned anymore!" + Color.RESET.get());
         }
     }
 
 
     //METHOD FOR ATTACKING
     public static int attack(int roll, Entity att, Entity def){ // takes in the "dice" roll, attacker attack, attacked ac, attacked hp, name of the attacker, name of the attacked and returning new attacked hp
-        int crit = 20 - (att.luck / 10);
-        if (((roll + att.hitBonus()) >= def.ac && def.hp > 0 && roll != 1) || roll >= (crit)){
+        int crit = 20 - (att.getLuck() / 10);
+        if (((roll + att.hitBonus()) >= def.getAc() && def.getHp() > 0 && roll != 1) || roll >= (crit)){
             if(roll >= crit){
                  //Critical double damgae
                 int dmg = att.dmg() * 2;
-                def.hp -= dmg ;
-                System.out.println(Color.RED.get() + "CRITICAL!!! " + Color.RESET.get() + att.name + " hit! " + def.name + " for: " + Color.RED.get() + dmg + Color.RESET.get() + " hp is now at: " + def.hp + " points!");
+                def.setHp(def.getHp() - dmg);
+                System.out.println(Color.RED.get() + "CRITICAL!!! " + Color.RESET.get() + att.getName() + " hit! " + def.getName() + " for: " + Color.RED.get() + dmg + Color.RESET.get() + " hp is now at: " + def.getHp() + " points!");
             }else{
                 int hit = att.dmg();
-                def.hp -= hit;
-                System.out.println(att.name + " hit " + def.name + " for: " + Color.RED.get() + hit + Color.RESET.get() + " " + def.name + " hp is: " + def.hp + " points!");
+                def.setHp(def.getHp() - hit);
+                System.out.println(att.getName() + " hit " + def.getName() + " for: " + Color.RED.get() + hit + Color.RESET.get() + " " + def.getName() + " hp is: " + def.getHp() + " points!");
 
             }
             if(att instanceof Player && def instanceof Enemy){ //poison machanics!
@@ -1059,12 +1375,12 @@ public class Fight{
             }
         }
         else if(roll == 1){ //1 is a critical miss no matter what
-            System.out.println("CRITICAL MISS FOR " + att.name);
+            System.out.println("CRITICAL MISS FOR " + att.getName());
         }
         else{
-            System.out.println(att.name + " missed.");
+            System.out.println(att.getName() + " missed.");
         }
-        return def.hp;
+        return def.getHp();
     }
 
     // ============= Time Wait Method ===========
@@ -1084,6 +1400,7 @@ public class Fight{
         Scanner scan = new Scanner(System.in); // for user inputs
         Player player = new Player(); // user player
         String userAnsware1 = "PLACE HOLDER"; // for if the user wants to play
+        final String DEF_NAME = "hero";
         
         //diffrent types of counts 
         int fightCount = 0;
@@ -1097,7 +1414,7 @@ public class Fight{
         System.out.println("please enter your name");
         String userName = scan.nextLine();
         if( userName.equals("")){
-            userName = "hero";
+            userName = DEF_NAME;
         }
         player.newPlayer(userName);
 
@@ -1106,11 +1423,11 @@ public class Fight{
         
         wait(500);
         
-        System.out.println("hp: " + Color.BLUE.get() + player.hp + Color.RESET.get());
-        System.out.println("ac: " + Color.RED.get() + player.ac + Color.RESET.get());
-        System.out.println("Weapon: " + player.wep.name + " damage die: " + player.wep.diceCount + "d" + player.wep.diceType);
-        System.out.println("Armor: " + player.arm.name + " ac: " + player.arm.ac);
-        System.out.println("Gold: " + Color.YELLOW.get() + player.gold + Color.RESET.get());
+        System.out.println("hp: " + Color.BLUE.get() + player.getHp() + Color.RESET.get());
+        System.out.println("ac: " + Color.RED.get() + player.getAc() + Color.RESET.get());
+        System.out.println("Weapon: " + player.getWeapon().getName() + " damage die: " + player.getWeapon().getDiceCount() + "d" + player.getWeapon().getDiceType());
+        System.out.println("Armor: " + player.getArmor().getName() + " ac: " + player.getArmor().getAc());
+        System.out.println("Gold: " + Color.YELLOW.get() + player.getGold() + Color.RESET.get());
         wait(500);
 
         while(!userAnsware1.equals("y") && !userAnsware1.equals("yes")){ //loop for the first init
@@ -1128,29 +1445,29 @@ public class Fight{
         
         
             //========FIGHT BLOCK=======
-        while (player.hp > 0 && player.lvl < 10){
+        while (player.getHp() > 0 && player.getLvl() < 10){
             Enemy e = new Enemy(); //spawn enemy
-            e.lvlBased(player.lvl);
-            if(player.lvl >= 3){
+            e.lvlBased(player.getLvl());
+            if(player.getLvl() >= 3){
                 e.isBoss(false);
             }
 
-            if(player.lvl == 9){ // checking for final boss
+            if(player.getLvl() == 9){ // checking for final boss
                 player.finalBossFight(e);
             }
 
 
             wait(500);
 
-            System.out.println(player.name + " has met with " + e.name + "!");
-            System.out.println(player.name + " HP: " + player.hp + " AC: " + player.ac);
-            System.out.println(e.name + " HP: " + e.hp + " AC: " + e.ac);
+            System.out.println(player.getName() + " has met with " + e.getName() + "!" );
+            System.out.println(player.getName() + " HP: " + player.getHp() + " AC: " + player.getAc() + " Level: " + player.getLvl());
+            System.out.println(e.getName() + " HP: " + e.getHp() + " AC: " + e.getAc() + " Level: " + e.getLvl());
             
             wait(500);
 
             System.out.println("---- FIGHT ----");
             int count = 0; // For counting rounds
-            while ((player.hp > 0 && e.hp > 0)){
+            while ((player.getHp() > 0 && e.getHp() > 0)){
             System.out.println("---- Round " + (count + 1) + "----");
             int rollE = rand.nextInt(20) + 1;
             int rollU = rand.nextInt(20) + 1;
@@ -1166,14 +1483,14 @@ public class Fight{
             
 
                 //=======ENEMY METHOD=======
-            if(e.hp > 0){
-                player.hp = attack(rollE, e, player);
+            if(e.getHp() > 0){
+                player.setHp(attack(rollE, e, player));
             }
 
                 //=======USER METHOD=========
         
-            if(player.hp > 0){
-                e.hp = attack(rollU, player, e);
+            if(player.getHp() > 0){
+                e.setHp(attack(rollU, player, e));
             }
             processPoison(player, e);
                 //========== END OF ROUND ==========
@@ -1184,93 +1501,93 @@ public class Fight{
             System.out.println("------ End of round " + count + "------");
             }
             
-            if(player.hp <= 0 && player.bag.getOrDefault("revive", 0) <= 0){
+            if(player.getHp() <= 0 && player.getBag().getOrDefault("revive", 0) <= 0){
                 System.out.println("You have been defeated!");
         
                 wait(1000);
 
                 System.out.println("========= "+ Color.RED.get() + "R I P" + Color.RESET.get() + " =========");
                 wait(300);
-                System.out.println("Name: " + player.name);
-                System.out.println("lvl: " + Color.BLUE.get() + player.lvl + Color.RESET.get());
-                System.out.println("hp: " + Color.GREEN.get() + player.MAXHP + Color.RESET.get());
-                System.out.println("ac: " + player.ac);
-                System.out.println("gold: " + Color.YELLOW.get() + (String.valueOf(player.gold)) + Color.RESET.get());
+                System.out.println("Name: " + player.getName());
+                System.out.println("lvl: " + Color.BLUE.get() + player.getLvl() + Color.RESET.get());
+                System.out.println("hp: " + Color.GREEN.get() + player.getMaxHP() + Color.RESET.get());
+                System.out.println("ac: " + player.getAc());
+                System.out.println("gold: " + Color.YELLOW.get() + (String.valueOf(player.getGold())) + Color.RESET.get());
                 System.out.println("You have fought: " + fightCount + " fights");
-                System.out.println("was slayed by " + Color.RED.get() + e.name + Color.RESET.get());
+                System.out.println("was slayed by " + Color.RED.get() + e.getName() + Color.RESET.get());
                 wait(300);
                 System.out.println("=========================");
 
                 wait(1000);
 
                 System.exit(0);
-            }else if(e.hp <= 0){
-                if(e.data.equals("Slime")){
+            }else if(e.getHp() <= 0){
+                if(e.getData().equals("Slime")){
                     slimeCount += 1;
-                }else if(e.data.equals("Wolf")){
+                }else if(e.getData().equals("Wolf")){
                     wolfCount += 1;
-                }else if(e.data.equals("Goblin")){
+                }else if(e.getData().equals("Goblin")){
                     goblinCount += 1;
-                }else if(e.data.equals("Dragon")){
+                }else if(e.getData().equals("Dragon")){
                     dragonCount += 1;
-                }else if(e.data.equals("Rat")){
+                }else if(e.getData().equals("Rat")){
                     ratCount += 1;
                 }
                 System.out.println("You have defeated the enemy! \n");
-                player.xp += e.xp;
-                player.gold += e.gold;
+                player.setXp(player.getXp() + e.getXp());
+                player.setGold(player.getGold() + e.getGold());
                 fightCount += 1;
-                e.dropChance(player.hp, player.lvl, player.bag, player);;
+                e.dropChance(player.getHp(), player.getLvl(), player.getBag(), player);;
                 player.recoverAfterBattle();
-                System.out.println("\nYou Got " + e.xp + " xp and " + Color.YELLOW.get() + (String.valueOf(e.gold)) + Color.RESET.get() + " gold!\n");
+                System.out.println("\nYou Got " + e.getXp() + " xp and " + Color.YELLOW.get() + (String.valueOf(e.getGold())) + Color.RESET.get() + " gold!\n");
                 player.checkLvlUp();
                 
                 // Check if boss was defeated and offer feat
-                if(e.boss == true){
+                if(e.isBossEnemy() == true){
                     player.offerBossFeat();
                 }
                 
-                System.out.println("You are lvl: " + player.lvl + ". " + (player.xpNeeded() - player.xp) + " needed more xp to lvl up.  with a " + player.wep.name + " that does: " + (player.wep.diceCount + player.diceCount) + "d" + player.wep.diceType + " + " + (player.wep.bonus + player.modifier) + " damage." );
-                System.out.println("You also have: " + Color.GREEN.get() + player.bag + Color.RESET.get() + "\n");
-                System.out.println("Armor: " + player.arm.name + " that gives: " + player.arm.ac + " ac.\n");
-                System.out.println("You have: " + Color.YELLOW.get() + (String.valueOf(player.gold)) + Color.RESET.get() + " gold.\n");
+                System.out.println("You are lvl: " + player.getLvl() + ". " + (player.xpNeeded() - player.getXp()) + " needed more xp to lvl up.  with a " + player.getWeapon().getName() + " that does: " + (player.getWeapon().getDiceCount() + player.getDiceCount()) + "d" + player.getWeapon().getDiceType() + " + " + (player.getWeapon().getBonus() + player.getModifier()) + " damage." );
+                System.out.println("You also have: " + Color.GREEN.get() + player.getBag() + Color.RESET.get() + "\n");
+                System.out.println("Armor: " + player.getArmor().getName() + " that gives: " + player.getArmor().getAc() + " ac.\n");
+                System.out.println("You have: " + Color.YELLOW.get() + (String.valueOf(player.getGold())) + Color.RESET.get() + " gold.\n");
                 player.displayFeats();
                 System.out.println();
                 
                 Shop shop = new Shop();
-                shop.item.makePotion();
-                shop.wep.update(rand.nextInt(player.lvl + 5) + 1, player.lvl, player);
-                shop.arm.updateArmor(player.lvl, player);
+                shop.getItem().makePotion();
+                shop.getWeapon().update(rand.nextInt(player.getLvl() + 5) + 1, player.getLvl(), player);
+                shop.getArmor().updateArmor(player.getLvl(), player);
                 System.out.println("Please enter any key and press enter to continue.");
                 
                 scan.next();
                 
                 // Handle pending feat selections if any
                 player.chooseFeatureFromInput(scan);
-                if(e.boss){
+                if(e.isBossEnemy()){
                     player.chooseBossFeat(scan);
                 }
                 
                 System.out.println("In the shop there are:");
-                System.out.println(shop.item.name + " priced at: " + Color.YELLOW.get() + (String.valueOf(shop.item.price)) + Color.RESET.get());
-                System.out.println(shop.wep.name + " priced at: " + Color.YELLOW.get() + (String.valueOf(shop.wep.price)) + Color.RESET.get());
-                System.out.println(shop.arm.name + " priced at: " + Color.YELLOW.get() + (String.valueOf(shop.arm.price)) + Color.RESET.get());
+                System.out.println(shop.getItem().getName() + " priced at: " + Color.YELLOW.get() + (String.valueOf(shop.getItem().getPrice())) + Color.RESET.get());
+                System.out.println(shop.getWeapon().getName() + " priced at: " + Color.YELLOW.get() + (String.valueOf(shop.getWeapon().getPrice())) + Color.RESET.get());
+                System.out.println(shop.getArmor().getName() + " priced at: " + Color.YELLOW.get() + (String.valueOf(shop.getArmor().getPrice())) + Color.RESET.get());
                 System.out.println("Do you want to go to the shop? y/n");
                 String shopInput = scan.next();
                 if(shopInput.equals("y") || shopInput.equals("yes")){
-                    player.gold = shop.canBuyItem(player.gold, shop.item, scan, player);
-                    player.gold = shop.canBuyWeapon(player.gold, shop.wep, scan, player);
-                    player.gold = shop.canBuyArmor(player.gold, shop.arm, scan, player);
+                    player.setGold(shop.canBuyItem(player.getGold(), shop.getItem(), scan, player));
+                    player.setGold(shop.canBuyWeapon(player.getGold(), shop.getWeapon(), scan, player));
+                    player.setGold(shop.canBuyArmor(player.getGold(), shop.getArmor(), scan, player));
             }
         }
     }
-    int score = (player.xp + ratCount + slimeCount + (wolfCount * 2) + (goblinCount * 3) + (dragonCount * 5) + player.feats.size()) / 7;
+    int score = (player.getXp() + ratCount + slimeCount + (wolfCount * 2) + (goblinCount * 3) + (dragonCount * 5) + player.getFeats().size()) / 7;
     System.out.println("======= " + Color.GREEN.get() + "W I N " + Color.RESET.get() + "=======");
     System.out.println("You have won the game!");
-    System.out.println(player.name + " have fought: " + fightCount + " fights");
-    System.out.println(player.name + " have: " + player.gold + " gold");
-    System.out.println(player.name +  " You have: " + player.xp + " xp");
-    System.out.println("Items: " + player.arm.name + ", " + player.wep.name + ".");
+    System.out.println(player.getName() + " have fought: " + fightCount + " fights");
+    System.out.println(player.getName() + " have: " + player.getGold() + " gold");
+    System.out.println(player.getName() +  " You have: " + player.getXp() + " xp");
+    System.out.println("Items: " + player.getArmor().getName() + ", " + player.getWeapon().getName() + ".");
     System.out.println("You have defeated: ");
     System.out.println(Color.YELLOW.get() + "Rats: " + ratCount + Color.RESET.get());
     System.out.println(Color.BLUE.get() + "Slimes: " + slimeCount + Color.RESET.get());
