@@ -181,9 +181,29 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
 
     public void lvlBased(int lvl){ //lvl is user lvl
         
+        int strongOrWeak = rand.nextInt(10) + 1;
+        int lucky = rand.nextInt(100) + 1;
+
         this.setHp(rand.nextInt(lvl * 20 - lvl * 5 + 1) + lvl * 5);
-        this.setLvl(rand.nextInt(4) + lvl);
+    
+        if (strongOrWeak <= 5){
+            this.setLvl(rand.nextInt(4) + lvl) ;
+        }else{
+            int minLvl = 1;
+            this.setLvl(rand.nextInt(2) + 1);
+            this.setHp(this.getHp() - (int)(this.getHp() * 0.30));
+            if (this.getLvl() < minLvl){
+                this.setLvl(minLvl);
+            }
+        }
+
+        if (lucky >= 97){
+            this.setLuck(1);
+            this.setName(this.getName() + Color.GREEN.get() + " Lucky" + Color.RESET.get());
+        }
+        
         int minXp = lvl;
+        
 
         int maxBonus = Math.max(1, this.getLvl() / 2);
         
@@ -227,7 +247,7 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
             this.setName(Color.BGREEN.get() + "Goblin" + Color.RESET.get());
             this.data = "Goblin";
         }
-        else if(this.getHp() > 17 * lvl && this.getHp() <= 20 * lvl && lvl >= 2){
+        else if(this.getHp() > 17 * lvl && this.getHp() <= 20 * lvl && lvl >= 3){
             this.setAc(rand.nextInt((10 + lvl) - (6 + lvl) + 1) + (6 + lvl));
             this.diceType = 6;
             this.diceCount = 2 + ((lvl / 4));
@@ -268,11 +288,11 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
             chance = ((Uhp * 2) / Ulvl);
         }
         else{
-            chance = ((Uhp * 10) / Ulvl);
+            chance = (int)((Uhp * 10) / Ulvl) / 100;
         }
 
         //drop chance is 30% with out player luck modifier
-        if (30 > (rand.nextInt(100) + chance + player.getLuck())){
+        if (60 < (rand.nextInt(100) + chance + player.getLuck())){
             Item drop = new Item();
             drop.makePotion();
             bag.put(drop.getName(), bag.getOrDefault(drop.getName(), 0) + 1);
@@ -288,6 +308,7 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
     }
 
     public void finalBoss(){
+        this.setLvl(9);
         this.setAc(this.rand.nextInt(10) + 7);
         this.setHp(18 * 9);
         this.diceType = 8;
@@ -388,12 +409,17 @@ class Weapon{ // weapons and their abilities
             this.diceCount = 1;
             this.diceType = 4;
         }
-        else if(this.data >= 5 && this.data <= 8){
+        else if(this.data >= 5 && this.data <= 7){
+            this.name = "club";
+            this.diceCount = 1;
+            this.diceType = 6;
+        }
+        else if(this.data >= 8 && this.data <= 10){
             this.name = "Sword";
             this.diceCount = 1;
             this.diceType = 8;
         }
-        else if(this.data > 8 && this.data <= 12){
+        else if(this.data > 10 && this.data <= 12){
             this.name = "Battle Axe";
             this.diceCount = 1;
             this.diceType = 12;
@@ -664,7 +690,7 @@ class Player extends Entity{
         this.setGold(rand.nextInt(100 - (this.arm.getPrice()) + this.wep.getPrice()) + 26);    
         item.makePotion();
         this.bag.put(this.item.getName(), bag.getOrDefault(this.item.getName(), 0) + 1);
-        wep.update(rand.nextInt(4) + 1, this.getLvl(), this);
+        wep.update(rand.nextInt(6) + 1, this.getLvl(), this);
         this.attack = dmg();
     }
 
@@ -797,11 +823,11 @@ class Player extends Entity{
    // ========= DAMAGE METHODS ============ 
     public void dicePool(){
         if(this.fireMage == true){
-            this.dicepool.put(6, 1);
+            this.dicepool.put(6, this.dicepool.getOrDefault(6, 0) + 1);
         }else if(this.waterMage == true){
-            this.dicepool.put(8, 1);
+            this.dicepool.put(8, this.dicepool.getOrDefault(8, 0) + 1);
         }else if(this.poisonMage == true){
-            this.poisonpool.put(4, 1);
+            this.poisonpool.put(4, this.poisonpool.getOrDefault(4, 0) + 1);
         }
     }
     
@@ -817,6 +843,33 @@ class Player extends Entity{
         return poisondmg;
     }
 
+    public String dicePoolToString(){
+        if(this.dicepool.isEmpty()){
+            return "";
+        }else{
+        List<String> dicePoolStrings = new ArrayList<>();
+        for(Map.Entry<Integer, Integer> entry : dicepool.entrySet()){
+            int diceType = entry.getKey();
+            int diceCount = entry.getValue();
+            String diceString = "";
+
+            switch(diceType){
+                case 6:
+                    diceString = Color.RED.get() + "d6" + Color.RESET.get();
+                    break;
+                case 8:
+                    diceString = Color.BLUE.get() + "d8" + Color.RESET.get();
+                    break;
+                default:
+                    diceString = "";
+            }
+            dicePoolStrings.add(diceCount + diceString);  // Add once, outside inner loop
+        }
+        // Join the list into a single string
+        return String.join(" ", dicePoolStrings);
+        }
+    }
+
     private int rollExtraDice(){
         int extraDamage = 0; 
         for(Map.Entry<Integer, Integer> entry : dicepool.entrySet()){
@@ -827,11 +880,13 @@ class Player extends Entity{
                 extraDamage += roll;
                 switch(diceType){
                     case 6:
-                        System.out.println("Fire damage: " + Color.RED.get() + roll + Color.RESET.get());
+                        System.out.println(Color.RED.get() + "Fire damage: " + roll + Color.RESET.get());
                         break;
                     case 8:
-                        System.out.println("Water damage: " + Color.BLUE.get() + roll + Color.RESET.get());
+                        System.out.println( Color.BLUE.get() +"Water damage: "  + roll + Color.RESET.get());
                         break;
+                    default:
+                        System.out.println("[DEBUG] Unknown damage type: " + roll);
                 }
             }
         }
@@ -1345,7 +1400,7 @@ public class Fight{
         int hit = player.poisondmg();
         enemy.setHp(enemy.getHp() - hit);
         enemy.setPoisonCount(enemy.getPoisonCount() - 1);
-        System.out.println(enemy.getName() + Color.BGREEN.get() + " Is poisoned! and was hit by: " + hit + Color.RESET.get());
+        System.out.println(enemy.getName() + Color.BGREEN.get() + " Is poisoned! and was hit by: " + hit + Color.RESET.get() + " hp is : " + enemy.getHp());
         if(enemy.getPoisonCount() <= 0){
             enemy.setPoisoned(false);
             System.out.println(enemy.getName() + Color.BGREEN.get() + " Is not poisoned anymore!" + Color.RESET.get());
@@ -1445,7 +1500,7 @@ public class Fight{
         
         
             //========FIGHT BLOCK=======
-        while (player.getHp() > 0 && player.getLvl() < 10){
+        while (player.getHp() > 0 && player.getLvl() < 10 && player.getBag().getOrDefault("revive", 0) > 0){
             Enemy e = new Enemy(); //spawn enemy
             e.lvlBased(player.getLvl());
             if(player.getLvl() >= 3){
@@ -1547,7 +1602,7 @@ public class Fight{
                     player.offerBossFeat();
                 }
                 
-                System.out.println("You are lvl: " + player.getLvl() + ". " + (player.xpNeeded() - player.getXp()) + " needed more xp to lvl up.  with a " + player.getWeapon().getName() + " that does: " + (player.getWeapon().getDiceCount() + player.getDiceCount()) + "d" + player.getWeapon().getDiceType() + " + " + (player.getWeapon().getBonus() + player.getModifier()) + " damage." );
+                System.out.println("You are lvl: " + player.getLvl() + ". " + (player.xpNeeded() - player.getXp()) + " needed more xp to lvl up.  with a " + player.getWeapon().getName() + " that does: " + (player.getWeapon().getDiceCount() + player.getDiceCount()) + "d" + player.getWeapon().getDiceType() + " + " + (player.getWeapon().getBonus() + player.getModifier()) + " " + player.dicePoolToString() + " damage." );
                 System.out.println("You also have: " + Color.GREEN.get() + player.getBag() + Color.RESET.get() + "\n");
                 System.out.println("Armor: " + player.getArmor().getName() + " that gives: " + player.getArmor().getAc() + " ac.\n");
                 System.out.println("You have: " + Color.YELLOW.get() + (String.valueOf(player.getGold())) + Color.RESET.get() + " gold.\n");
