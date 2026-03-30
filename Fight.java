@@ -29,6 +29,9 @@ enum Color{ // ANSI colors wrok only on more newer terminals, if wanna use it an
     ORANGE("\u001B[38;5;208m"),
     BGREEN("\u001B[38;5;46m"),
     BRED("\u001B[38;5;196m"),
+    PINK("\u001B[38;5;213m"),
+    BBLUE("\u001B[38;5;39m"),
+    BORANGE("\u001B[38;5;214m"),
     RESET("\u001B[0m");
 
     private final String code;
@@ -277,22 +280,27 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
     }
 
     public void dropChance(int Uhp, int Ulvl, Map<String, Integer> bag, Player player){ //item drops, potions will be called when enemy is dead
-        int chance;
-        if (this.data.equals("Slime")){
-            chance = ((Uhp * 3) / Ulvl);
-        }else if (this.data.equals("Wolf")){
-            chance = ((Uhp * 5) / Ulvl);
-        }else if (this.data.equals("Goblin")){
-            chance = ((Uhp * 7) / Ulvl);
-        }else if (this.data.equals("Rat")){
-            chance = ((Uhp * 2) / Ulvl);
+        int baseChance = 20;
+        switch(this.data){
+            case "Slime":
+                baseChance += 5;
+                break;
+            case "Wolf":
+                baseChance += 10;
+                break;
+            case "Goblin":
+                baseChance += 15;
+                break;
+            case "Dragon":
+                baseChance += 20;
+                break;
+            default:
+                break;
         }
-        else{
-            chance = (int)((Uhp * 10) / Ulvl) / 100;
-        }
+        int totalChance = baseChance + player.getLuck();
 
         //drop chance is 30% with out player luck modifier
-        if (60 < (rand.nextInt(100) + chance + player.getLuck())){
+        if ((rand.nextInt(100) + 1 < totalChance)){
             Item drop = new Item();
             drop.makePotion();
             bag.put(drop.getName(), bag.getOrDefault(drop.getName(), 0) + 1);
@@ -400,6 +408,11 @@ class Weapon{ // weapons and their abilities
     private int data; // ID for the damage stats
     private int bonus;
     private int price;
+    
+
+    public String toString(){
+        return this.name + " " + this.diceCount + "d" + this.diceType + " " + this.bonus;
+    }
 
 
     public void update(int dmg, int playerlvl, Player player){  // will be called when buying or first opening the game
@@ -1313,6 +1326,7 @@ class Shop{ // Can be accesed at the end of fights
         if(gold >= wepName.getPrice()){
             System.out.println("Do you want to buy this weapon? " + wepName.getName() + " y/n");
             System.out.println("Damage die: " + wepName.getDiceCount() + "d" + wepName.getDiceType() + "+" + " " + wepName.getBonus());
+            System.out.println("Compaer to yours: " + user.getWeapon() + " " + user.getBonus());
             String input1 = scan.next();
             if(input1.equals("y") || input1.equals("yes")){
                 gold -= wepName.getPrice();
@@ -1472,8 +1486,11 @@ public class Fight{
             userName = DEF_NAME;
         }
         player.newPlayer(userName);
+        if(player.getName().length() > 30){
+            player.setName(player.getName().substring(0, 30));
+        }
 
-        System.out.println("Hello " + Color.ORANGE.get() + userName + Color.RESET.get() + ".");
+        System.out.println("Hello " + Color.ORANGE.get() + player.getName() + Color.RESET.get() + ".");
         System.out.println("This are your stats: ");
         
         wait(500);
@@ -1602,9 +1619,9 @@ public class Fight{
                     player.offerBossFeat();
                 }
                 
-                System.out.println("You are lvl: " + player.getLvl() + ". " + (player.xpNeeded() - player.getXp()) + " needed more xp to lvl up.  with a " + player.getWeapon().getName() + " that does: " + (player.getWeapon().getDiceCount() + player.getDiceCount()) + "d" + player.getWeapon().getDiceType() + " + " + (player.getWeapon().getBonus() + player.getModifier()) + " " + player.dicePoolToString() + " damage." );
+                System.out.println("You are lvl: " + Color.PINK.get() + player.getLvl() + Color.RESET.get() + ". " + Color.BORANGE.get() + (player.xpNeeded() - player.getXp()) + Color.RESET.get() + " needed more xp to lvl up.  with a " + player.getWeapon().getName() + " that does: " + (player.getWeapon().getDiceCount() + player.getDiceCount()) + "d" + player.getWeapon().getDiceType() + " + " + (player.getWeapon().getBonus() + player.getModifier()) + " " + player.dicePoolToString() + " damage." );
                 System.out.println("You also have: " + Color.GREEN.get() + player.getBag() + Color.RESET.get() + "\n");
-                System.out.println("Armor: " + player.getArmor().getName() + " that gives: " + player.getArmor().getAc() + " ac.\n");
+                System.out.println("Armor: " + player.getArmor().getName() + " that gives: " + Color.BBLUE.get() + player.getArmor().getAc() + Color.RESET.get() + " ac.\n");
                 System.out.println("You have: " + Color.YELLOW.get() + (String.valueOf(player.getGold())) + Color.RESET.get() + " gold.\n");
                 player.displayFeats();
                 System.out.println();
