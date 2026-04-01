@@ -7,18 +7,30 @@ import java.util.ArrayList;
 
 
 /** In this program we are doing a random to check who will win in a psudo very simplified dnd style combat
- * @Author Ben Farjun
- * @git.hub @Hmimesh
- * @version 30/03/2026
+ * 
+ * notice this is an onging and educational program from things i learn an implement
+ * if you want to use it do with it something else you are welcome to!
+ * 
+ * check me out in github - Hmimesh
+ * 
+ * @author Ben Farjun
+ * @version 01/04/2026
 */ 
 
 
 //=================== COLOR ENUM =====================
 
+/**
+ * Color configuration checks if the users have a terminal ie console
+ * 
+ */
 class ColorConfig{
     public static final boolean USE_COLOR = System.console() != null;
 }
-
+/**
+ * enum for colors
+ * 
+ */
 enum Color{ // ANSI colors wrok only on more newer terminals, if wanna use it and see it please run on something like WSL / Powershell / Linux etc... and not on something like BlueJ
     RED("\u001B[31m"),
     GREEN("\u001B[32m"),
@@ -35,17 +47,29 @@ enum Color{ // ANSI colors wrok only on more newer terminals, if wanna use it an
     RESET("\u001B[0m");
 
     private final String code;
-
+    /**
+     * the strings for color or ending
+     * 
+     * @param code take the lines needed for said colors
+     */
     Color(String code){
         this.code = code;
     }
 
+    /**
+     * a simpler way to return color or ending the color4
+     * 
+     * @return return color or reset
+     */
     public String get(){
         return ColorConfig.USE_COLOR ? code : "";
     }
 }
 
 // ================= ENTETY CLASS =================
+/**
+ * Entity class parant to the enemy and player class
+ */
 abstract class Entity{
     private String name;
     private int hp;
@@ -58,31 +82,37 @@ abstract class Entity{
 
     abstract int dmg();
 
+    /**
+     * hit bonus for dice rolls and adding hits
+     * @return the bonus modifier || bonus
+     */
     public int hitBonus(){
        return bonus;
     }
     
     // ===== GETTERS =====
+
     public String getName(){
         return this.name;
     }
-    
+
     public int getHp(){
         return this.hp;
     }
-    
+
     public int getAc(){
         return this.ac;
     }
     
+
     public int getBonus(){
         return this.bonus;
     }
-    
+
     public int getLvl(){
         return this.lvl;
     }
-    
+
     public int getXp(){
         return this.xp;
     }
@@ -99,19 +129,19 @@ abstract class Entity{
     public void setName(String name){
         this.name = name;
     }
-    
+
     public void setHp(int hp){
         this.hp = hp;
     }
-    
+
     public void setAc(int ac){
         this.ac = ac;
     }
-    
+
     public void setBonus(int bonus){
         this.bonus = bonus;
     }
-    
+
     public void setLvl(int lvl){
         this.lvl = lvl;
     }
@@ -119,7 +149,7 @@ abstract class Entity{
     public void setXp(int xp){
         this.xp = xp;
     }
-    
+
     public void setGold(int gold){
         this.gold = gold;
     }
@@ -134,17 +164,25 @@ abstract class Entity{
 
 
 //=================== ENEMY CLASS ====================
-
+/**
+ * Enemy class for battles.
+ */
 class Enemy extends Entity{ //the enemy class should be with hp for hit points, ac = for armor class, and attack for bonusus
     private Random rand = new Random();
     private String data;
     private int attack;
     private int diceCount;
     private int diceType;
-    private int potionHeal;
     private int poisonCount;
     private boolean boss;
     private boolean poisoned = false;
+    
+    /**
+    * isBoss check to see if the enemy is boss and return a boolean if he is boss
+    * 
+    * @param ending boolean check if ending
+    * @return return a boolean if the enemy is a boss
+    */
 
     public boolean isBoss(boolean ending){
         int chance =  rand.nextInt(100);
@@ -172,6 +210,12 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
         }
     }
 
+    /**
+     * dmg method for caclulating damage done by this entity
+     * 
+     * @return a damage value
+     */
+
     public int dmg(){
         int damage = 0;
         Random rand = new Random();
@@ -181,6 +225,12 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
         damage += this.getBonus();
         return damage;
     }
+
+    /**
+     * Configure this enemy based on player lvl
+     * 
+     * @param lvl the player level
+     */
 
     public void lvlBased(int lvl){ //lvl is user lvl
         
@@ -279,6 +329,14 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
         }
     }
 
+    /**
+     * a check to see if the player get an item drop
+     * 
+     * @param Uhp User(aka player) health points
+     * @param Ulvl User(aka Player) level
+     * @param bag a map of bag with String and integer 
+     * @param player a player class
+     */
     public void dropChance(int Uhp, int Ulvl, Map<String, Integer> bag, Player player){ //item drops, potions will be called when enemy is dead
         int baseChance = 20;
         switch(this.data){
@@ -313,7 +371,11 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
         
     
     }
-
+    /**
+     * Configurethe enemy to be the final boss 
+     * 
+     * @param player a player class for its name
+     */
     public void finalBoss(Player player){
         this.setLvl(9);
         this.setAc(this.rand.nextInt(10) + 7);
@@ -339,7 +401,7 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
         this.setHp(this.getHp() + 5 * ((this.getLvl() / 2) + 1));
         this.setBonus(this.getBonus() + rand.nextInt(5) + 1);
 
-        this.setName(Color.BRED.get() + "Final Boss" + Color.RESET.get() + Color.CYAN.get() + "Evil " + player.getName() + Color.RESET.get());
+        this.setName(Color.BRED.get() + "Final Boss " + Color.RESET.get() + Color.CYAN.get() + "Evil " + player.getName() + Color.RESET.get());
 }
 
     // ===== GETTERS =====
@@ -358,15 +420,11 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
     public int getDiceType(){
         return this.diceType;
     }
-    
-    public int getPotionHeal(){
-        return this.potionHeal;
-    }
-    
+
     public int getPoisonCount(){
         return this.poisonCount;
     }
-    
+
     public boolean isBossEnemy(){
         return this.boss;
     }
@@ -392,14 +450,10 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
         this.diceType = diceType;
     }
     
-    public void setPotionHeal(int potionHeal){
-        this.potionHeal = potionHeal;
-    }
-    
     public void setPoisonCount(int poisonCount){
         this.poisonCount = poisonCount;
     }
-    
+
     public void setBoss(boolean boss){
         this.boss = boss;
     }
@@ -410,6 +464,9 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
 }
 //============== WEAPON CLASS ==================
 
+/**
+ * Weapon class for spawning, creating and modifying wepons
+ */
 class Weapon{ // weapons and their abilities
     private String name;
     private int diceCount; //number of dices
@@ -418,13 +475,23 @@ class Weapon{ // weapons and their abilities
     private int bonus;
     private int price;
     
-
+    /**
+     * returns a string of a wep for example = "dagger 1d4 + 0"
+     * 
+     * @return String of a wepon discription
+     */
     public String toString(){
         return this.name + " " + this.diceCount + "d" + this.diceType + " " + this.bonus;
     }
 
 
-    public void update(int dmg, int playerlvl, Player player){  // will be called when buying or first opening the game
+    /**
+     * a file of wepons list of potentioal wepons update the wep in memory
+     * 
+     * @param dmg id for damage stat
+     * @param player player class foor luck and level
+     */
+    public void update(int dmg, Player player){  // will be called when buying or first opening the game
         this.data = dmg; 
         if(this.data <= 4){
             this.name = "Dagger";
@@ -451,13 +518,14 @@ class Weapon{ // weapons and their abilities
             this.diceType = 6;
         }
         this.price = this.data * 10;
-        checkBonusDice(playerlvl, player.getLuck());
-        enhancerWep(playerlvl, player.getLuck());
+        checkBonusDice(player.getLvl(), player.getLuck());
+        enhancerWep(player.getLvl(), player.getLuck());
         
 
     }
 
     // ===== GETTERS =====
+
     public String getName(){
         return this.name;
     }
@@ -465,19 +533,27 @@ class Weapon{ // weapons and their abilities
     public int getDiceCount(){
         return this.diceCount;
     }
-    
+
     public int getDiceType(){
         return this.diceType;
     }
     
+
     public int getBonus(){
         return this.bonus;
     }
     
+
     public int getPrice(){
         return this.price;
     }
 
+    /**
+     * checkes and add to this weapon a modifier to enhance it based on luck and player level
+     * 
+     * @param playerlvl is the player level value
+     * @param luck is the player luck value
+     */
     private void enhancerWep(int playerlvl , int luck){
         Random rand = new Random();
         int chance = rand.nextInt((100) + 1);
@@ -523,6 +599,12 @@ class Weapon{ // weapons and their abilities
         }
     } 
 
+    /**
+     * Check and add a bonus diceCount to weapon if pass the mark using player level and luck
+     * 
+     * @param playerLevel the player level value 
+     * @param luck the player luck value
+     */
     private void checkBonusDice(int playerLevel, int luck){
         Random rand = new Random();
         int chance = rand.nextInt((100) + 1);
@@ -551,6 +633,12 @@ class Weapon{ // weapons and their abilities
 
 //=================== FEAT ENUM =====================
 
+/**
+ * The feat enum is for the diffrent feats in the game they
+ * Are based on name, descriotion, category and rarity.
+ * 
+ * they apply their discription to the player and print to the user what they gained. [now in colors]
+ */
 enum Feat{
     POWER("POWER", "Bonus damage +1", "damage", 1){
         public void apply(Player p){
@@ -631,7 +719,14 @@ enum Feat{
     String description;
     String category;
     int rarity;
-
+    /**
+     * How the feats should be used.
+     * 
+     * @param name String name for the feat
+     * @param description String description for the feat
+     * @param category String category for the feat
+     * @param rarity int rarity value between 1-5
+     */
     Feat(String name, String description, String category, int rarity){
         this.name = name;
         this.description = description;
@@ -643,6 +738,11 @@ enum Feat{
 
     public abstract void apply(Player p);
 
+    /**
+     * diffrent colors for diffrent rarity
+     * 
+     * print out to user the feat
+     */
     public void display(){
     String rName;
         switch(rarity){
@@ -666,8 +766,11 @@ enum Feat{
 }
 }
 
-//========== PLAYER CLAS ============
-
+//========== PLAYER CLASS ============
+/**
+ * The player class the user playing this class
+ * it extend the Entity class
+ */
 class Player extends Entity{
     private int MAXHP;
     private int MAXAC;
@@ -689,13 +792,17 @@ class Player extends Entity{
 
     private Map<String, Integer> bag = new HashMap<>(); //bag for diff potions
     private Map<Feat, Integer> feats = new HashMap<>(); //track acquired feats and count
-    private Map<Integer, Integer> dicepool = new HashMap<>();
-    private Map<Integer, Integer> poisonpool= new HashMap<>();
+    private Map<Integer, Integer> dicepool = new HashMap<>(); // for magic type attacks
+    private Map<Integer, Integer> poisonpool= new HashMap<>(); // for poison damage over time attacks
 
 
     private Random rand = new Random();
 
-
+    /**
+     * configure a new player with the user input as name
+     * 
+     * @param newName String user input name 
+     */
     public void newPlayer(String newName){ //when starting new game init for the user
         this.setName(Color.ORANGE.get() + newName + Color.RESET.get());
         this.setLvl(1);
@@ -705,14 +812,14 @@ class Player extends Entity{
         this.setLuck(0);
         this.arm = new Armor();
         this.diceCount = 0;
-        this.arm.updateArmor(this.getLvl(), this);
+        this.arm.updateArmor(this);
         this.setAc(10 + this.arm.getAc());
         this.wep = new Weapon();
         this.item = new Item();
         this.setGold(rand.nextInt(100 - (this.arm.getPrice()) + this.wep.getPrice()) + 26);    
         item.makePotion();
         this.bag.put(this.item.getName(), bag.getOrDefault(this.item.getName(), 0) + 1);
-        wep.update(rand.nextInt(6) + 1, this.getLvl(), this);
+        wep.update(rand.nextInt(6) + 1, this);
         this.attack = dmg();
         if(newName.equals("GOD")){
             Cheats.GOD.active(this);
@@ -843,11 +950,18 @@ class Player extends Entity{
         this.arm = arm;
     }
 
+    /**
+     * return an int value of how much xp the player need for level up!
+     * @return int the value of how much xp needed to level up
+     */
     public int xpNeeded(){ // for lvl ups
         int xpNeeded = (this.getLvl() + 1) * (this.getLvl() + 2) * 5;
         return xpNeeded;
     }
    // ========= DAMAGE METHODS ============ 
+   /**
+    * dice pool adds dices of magic attacks or DOTS if the player have them
+    */
     public void dicePool(){
         if(this.fireMage == true){
             this.dicepool.put(6, this.dicepool.getOrDefault(6, 0) + 1);
@@ -857,7 +971,11 @@ class Player extends Entity{
             this.poisonpool.put(4, this.poisonpool.getOrDefault(4, 0) + 1);
         }
     }
-    
+    /**
+     * Calculate the damage the user is doing for each dice he have of poison
+     * 
+     * @return int sum of poison damage
+     */
     public int poisondmg(){
         int poisondmg = 0;
         for(Map.Entry<Integer, Integer> entry: poisonpool.entrySet()){
@@ -870,6 +988,12 @@ class Player extends Entity{
         return poisondmg;
     }
 
+    /**
+     * Return a string that show how much damage did each roll did of added dice.
+     * in the color of damage it is done on.
+     * 
+     * @return a String of the damage that was done in the form of a dice. 
+     */
     public String dicePoolToString(){
         if(this.dicepool.isEmpty()){
             return "";
@@ -897,6 +1021,11 @@ class Player extends Entity{
         }
     }
 
+    /**
+     * if a user have more dice in his dice pool roll for each dice he have 
+     * and return the damage for each one
+     * @return Int the sum of damage for each roll
+     */
     private int rollExtraDice(){
         int extraDamage = 0; 
         for(Map.Entry<Integer, Integer> entry : dicepool.entrySet()){
@@ -920,27 +1049,42 @@ class Player extends Entity{
         return extraDamage;
     }
 
+    
     @Override
+    /**
+     * Override the entity hitBonus() method and add the player bonus and his weapon bonus.
+     * 
+     * @return the int of the user modifier and player held weapon bonus
+     */
     public int hitBonus() {
         return this.modifier + this.wep.getBonus();
     }
 
-
+    /**
+     * Calculate the damgage the user is doing for each dice the weapon has
+     * and add the bonus dice if he has any, and hitBonus() if he has any
+     * @return int total sum of damage done by this player
+     */
     public int dmg(){ // main damage algo
         int damage = 0;;
         for (int i = 0; i < this.wep.getDiceCount() + this.diceCount; i++){
             damage += rand.nextInt(this.wep.getDiceType()) + 1;
         }
         damage += rollExtraDice();
-        damage += this.wep.getBonus() + this.modifier;
+        damage += hitBonus();
         return damage;
     }
 
     // =============== HEALTH METHODS ===============
-    public boolean isLowHealth(){
+    public boolean isLowHealth(){ 
         return this.getHp() > 0 && this.getHp() <= (int)(this.MAXHP * 0.45);
     }
 
+    /**
+     * check if the player has any potions
+     * 
+     * @return a boolean if he has any potions
+     */
     public boolean hasAnyPotion(){
         return bag.getOrDefault("weak potion", 0) > 0
             || bag.getOrDefault("medium potion", 0) > 0
@@ -948,6 +1092,11 @@ class Player extends Entity{
             || bag.getOrDefault("super potion", 0) > 0;
     }
 
+    /**
+     * use a potion based on merit, strongest to weakest and remove it from the bag Map.
+     * 
+     * @return String that represent which potion it used 
+     */
     private String useBestPotion(){
         String[] priorities = {"super potion", "strong potion", "medium potion", "weak potion"};
         int[] heals = {(int)(this.MAXHP * 0.7 + this.potionHeal), (int)(this.MAXHP * 0.5 + this.potionHeal), (int)(this.MAXHP * 0.3 + this.potionHeal), (int)(this.MAXHP * 0.15 + this.potionHeal)};
@@ -967,6 +1116,14 @@ class Player extends Entity{
         return null;
     }
 
+    /**
+     * if the player is low on health check if he has any potions
+     * drink the potion and heal for the hp needed
+     * 
+     * if he dosent have print that he have no potion if low on health
+     * 
+     * if he dies but have revive use it and remove it from the bag
+     */
     public void autoHealInFight(){
         if (this.isLowHealth()){
             if (this.hasAnyPotion()){
@@ -982,6 +1139,9 @@ class Player extends Entity{
         }
     }
 
+    /**
+     * heal the player for a precentege of max hp
+     */
     public void recoverAfterBattle(){ 
         if (this.getHp() < this.MAXHP){
             int heal = (int)(this.MAXHP * (this.recovery / 100.0));
@@ -1013,6 +1173,12 @@ class Player extends Entity{
         offerFeatSelectionWithInput(scan);
     }
 
+    /**
+     * create a pool of feats based of rarity.
+     * using a ist to add the feats to it and removing them based on weight '6'
+     *  
+     * @return List of feats
+     */
     private List<Feat> createWeightedFeatList() {
         List<Feat> weightedList = new ArrayList<>();
         
@@ -1040,6 +1206,9 @@ class Player extends Entity{
         return weightedList;
     }
 
+    /**
+     * Show the user the feats he can choose from 2 feats using the weighted list
+     */
     private void offerFeatSelection(){
         // Randomly offer 2 out of 4 feats according to rarity
         List<Feat> weightedFeats = createWeightedFeatList();
@@ -1064,7 +1233,13 @@ class Player extends Entity{
         pendingFeat[0] = f1;
         pendingFeat[1] = f2;
     }
-
+    
+    /**
+     * check what the player input and apply the feat he chose
+     * if not 1 or 2 choose 1
+     * 
+     * @param scan user input
+     */
     public void offerFeatSelectionWithInput(Scanner scan){
         if(pendingFeat[0] == null) return;
         
@@ -1083,6 +1258,9 @@ class Player extends Entity{
         pendingFeat[1] = null;
     }
 
+    /**
+     * Show the user the feats he can choose from 3 feats using the weighted list
+     */
     public void offerBossFeat(){
         // Boss drops guarantee feat offer
         List<Feat> weightedFeats = createWeightedFeatList();
@@ -1115,6 +1293,12 @@ class Player extends Entity{
         bossPendingFeat[2] = f3;
     }
 
+    /**
+     * check what the player input and apply the feat he chose
+     * if not 1 or 3 choose 1
+     * 
+     * @param scan user input
+     */
     public void chooseBossFeat(Scanner scan){
         if(bossPendingFeat[0] == null) return;
         
@@ -1143,6 +1327,9 @@ class Player extends Entity{
         this.feats.put(feat, this.feats.getOrDefault(feat, 0) + 1);
     }
 
+    /**
+     * Display the feats the user aquired
+     */
     public void displayFeats(){
         if(feats.isEmpty()){
             System.out.println("No feats acquired yet.");
@@ -1156,7 +1343,12 @@ class Player extends Entity{
     
     
     // =============== FINAL BOSS ===============
-    
+    /**
+     * create the final boss enemy
+     * 
+     * @param enemy the enemy the user currently fighting
+     * @return override the enemy as the final boss
+     */
     public Enemy finalBossFight(Enemy enemy){
         
         if(this.getLvl() == 9 && (this.xpNeeded() - this.getXp()) <= enemy.getXp()){
@@ -1167,15 +1359,19 @@ class Player extends Entity{
 
 }
 //=========== CHEATS ENUMS =========
-
+/**
+ * enums for cheats to modify the game using hp, gold, modifier, dice count, ac and luck.
+ * and activate it upon the player
+ */ 
 enum Cheats{
-    GOD("God mode", 100, 1000, 10, 3, 5){
+    GOD("God mode", 100, 1000, 10, 3, 5, 5){
         public void active(Player p){
             p.setMaxHP(100);
             p.setGold(1000);
             p.setModifier(10);
             p.setDiceCount(3);
             p.setAc(p.getAc() + 5);
+            p.setLuck(5);
         }
     };
     
@@ -1186,7 +1382,7 @@ enum Cheats{
     int diceCount;
     int ac;
 
-    Cheats(String name, int hp, int gold, int modifier, int diceCount, int ac){
+    Cheats(String name, int hp, int gold, int modifier, int diceCount, int ac, int luck){
         this.name = name;
         this.hp = hp;
         this.gold = gold;
@@ -1203,13 +1399,17 @@ enum Cheats{
 }
 
 //=========== ITEM CLASS ==========
-
+/**
+ * Item class for potions and revives
+ */
 class Item{ // potions, nothing else
     private String name;
     private int price;
     private int heal;
     private Random rand = new Random();
-    
+    /**
+     * configure an item using chance
+     */
     public void makePotion(){ //for shops and enemies 
         int chance = rand.nextInt(20) + 1;
         if(chance <= 4){
@@ -1254,14 +1454,20 @@ class Item{ // potions, nothing else
 }
 
 //============= ARMOR CLASS =============
-
+/**
+ * Armor class for the armor the player will use
+ * modifying the ac and adding to the ac of an Entity class (currently only player)
+ */
 class Armor{ // same logic as wep except for protaction
     private String name;
     private int ac;
     private int price;
     private Random rand = new Random();
-
-    public void updateArmor(int playerlvl, Player player){
+    /**
+     * configures the armor using the player class for luck and level
+     * @param player a player clsss for the _enhancerArm method
+     */
+    public void updateArmor(Player player){
     int chance = rand.nextInt(6) + 1;
     if (chance == 1){
         this.name = "leather";
@@ -1287,7 +1493,7 @@ class Armor{ // same logic as wep except for protaction
         this.name = "robe";
         this.ac = 0;
         this.price = 5;
-    }__enhancerArm(playerlvl, player.getLuck());
+    }__enhancerArm(player.getLvl(), player.getLuck());
     }
 
     // ===== GETTERS =====
@@ -1302,7 +1508,13 @@ class Armor{ // same logic as wep except for protaction
     public int getPrice(){
         return this.price;
     }
-
+    
+    /**
+     * check if the armor get enhanced modifiers using the player level and luck
+     * 
+     * @param playerlvl int of player level
+     * @param luck int of player luck
+     */
     private void __enhancerArm(int playerlvl, int luck){ //add incentives for later games to use money other than potions
         int chance = rand.nextInt((100) + 1) + luck;
         if(playerlvl > 3){
@@ -1347,7 +1559,9 @@ class Armor{ // same logic as wep except for protaction
 }
 
 //============== SHOP CLASS ==============
-
+/**
+ * A shop class for the player to visit and buy items, weapons and armor
+ */
 class Shop{ // Can be accesed at the end of fights
     private Item item = new Item();
     private Weapon wep = new Weapon();
@@ -1367,16 +1581,24 @@ class Shop{ // Can be accesed at the end of fights
     }
 
 
-    public int canBuyWeapon(int gold, Weapon wepName, Scanner scan, Player user){ // check if user can buy wep
+    /**
+     * create and check if the player can buy the weapon if they can
+     * check their input if they want to and change it accordingly
+     * 
+     * @param wepName the weapon it creats
+     * @param scan the player input
+     * @param user the current player playing
+     */
+    public void canBuyWeapon(Weapon wepName, Scanner scan, Player user){ // check if user can buy wep
         System.out.println("There is " + wepName.getName() + " its price is " + wepName.getPrice());
-        System.out.println("You have " + gold);
-        if(gold >= wepName.getPrice()){
+        System.out.println("You have " + user.getGold());
+        if(user.getGold() >= wepName.getPrice()){
             System.out.println("Do you want to buy this weapon? " + wepName.getName() + " y/n");
             System.out.println("Damage die: " + wepName.getDiceCount() + "d" + wepName.getDiceType() + "+" + " " + wepName.getBonus());
             System.out.println("Compaer to yours: " + user.getWeapon() + " " + user.getBonus());
             String input1 = scan.next();
             if(input1.equals("y") || input1.equals("yes")){
-                gold -= wepName.getPrice();
+                user.setGold(user.getGold() - wepName.getPrice());
                 System.out.println("You bought " + wepName.getName());
                 user.setAttack(0);
                 user.setWeapon(wepName);
@@ -1387,18 +1609,25 @@ class Shop{ // Can be accesed at the end of fights
         }else{
             System.out.println("Insufficiant gold");
         }
-        return gold;
     }
 
-    public int canBuyItem(int gold, Item potion, Scanner scan, Player user){ // same as before but for item
+    /**
+     * create and check if the player can buy the item, if they can
+     * check their input if they want to and change it accordingly
+     * 
+     * @param potion the item it creates
+     * @param scan the user input
+     * @param user the current player playing
+     */
+    public void canBuyItem(Item potion, Scanner scan, Player user){ // same as before but for item
         System.out.println("There is " + potion.getName() + " its price is " + potion.getPrice());
-        System.out.println("You have " + gold);
-        if(gold >= potion.getPrice()){
+        System.out.println("You have " + user.getGold());
+        if(user.getGold() >= potion.getPrice()){
             System.out.println("Do you want to buy this potion? " + potion.getName() + " y/n");
             System.out.println("Heal for: " + potion.getHeal());
             String input1 = scan.next();
             if(input1.equals("y") || input1.equals("yes")){
-                gold -= potion.getPrice();
+                user.setGold(user.getGold() - potion.getPrice());
                 System.out.println("You bought " + potion.getName());
                 user.getBag().put(potion.getName(), user.getBag().getOrDefault(potion.getName(), 0) + 1);
             }else{
@@ -1407,21 +1636,29 @@ class Shop{ // Can be accesed at the end of fights
         }else{
             System.out.println("Insufficiant gold");
         }
-        return gold;
     }    
 
-    public int canBuyArmor(int gold, Armor armName, Scanner scan, Player user){ // same as before but for armor
+    /**
+     * Create an armor and check if the user have enough gold to buy it
+     * if they do check their input if they want it and change it accordingly
+     * 
+     * @param armName - the armor thats being created
+     * @param scan - the player input 
+     * @param user - the current playing player
+     * @return
+     */
+    public void canBuyArmor(Armor armName, Scanner scan, Player user){ // same as before but for armor
         if (this.arm.getAc() == 0){
             this.arm = new Armor();
         }
         System.out.println("There is " + armName.getName() + " its price is " + Color.YELLOW.get() + (String.valueOf(armName.getPrice())) + Color.RESET.get());
-        System.out.println("You have " + Color.YELLOW.get() + (String.valueOf(gold) + Color.RESET.get()));
-        if(gold >= armName.getPrice()){
+        System.out.println("You have " + Color.YELLOW.get() + (String.valueOf(user.getGold()) + Color.RESET.get()));
+        if(user.getGold() >= armName.getPrice()){
             System.out.println("Do you want to buy this armor? " + armName.getName() + " y/n");
             System.out.println("Armor class: " + armName.getAc());
             String input1 = scan.next();
             if(input1.equals("y") || input1.equals("yes")){
-                gold -= armName.getPrice();
+                user.setGold(user.getGold() - armName.getPrice());
                 System.out.println("You bought " + armName.getName());
                 user.setAc(user.getAc() - user.getArmor().getAc()); 
                 user.setArmor(armName);
@@ -1430,7 +1667,6 @@ class Shop{ // Can be accesed at the end of fights
                 System.out.println("You didnt buy it!");
             }
         }
-        return gold;
     }
     
 }
@@ -1441,7 +1677,12 @@ class Shop{ // Can be accesed at the end of fights
 
 public class Fight{
     //=============== POISON METHODS ==================
-    private Random rand = new Random(); // random number generator ie rolls 
+    /**
+     * a method for the player if they can apply poison to try and apply the poison to the enemy
+     * 
+     * @param player current playing player 
+     * @param enemy current enemy
+     */
     public static void tryApplyPoison(Player player, Enemy enemy){
         Random rand = new Random();
         int d100 = rand.nextInt(100) + 1;
@@ -1452,6 +1693,14 @@ public class Fight{
         }
     }
 
+    /**
+     * check if the enemy is poisoned if yes apply the current player poison damage
+     * to the enemy health, also check the enemy poison count and lowers it
+     * 
+     * 
+     * @param player current playing player
+     * @param enemy current enemy
+     */
     public static void processPoison(Player player, Enemy enemy){
         
         if(!enemy.isPoisoned()){
@@ -1469,7 +1718,17 @@ public class Fight{
     }
 
 
-    //METHOD FOR ATTACKING
+    //======== METHOD FOR ATTACKING ============
+    /**
+     * the main attacking method using rolls of chance of d20 using 2 entities
+     * using rolls and bonuses against ac if it pass lower the defender hp according to the attack
+     * also have a crit succsus and fail if roll is 1 or 20 
+     * 
+     * @param roll int value of the roll 
+     * @param att Entity the one who attacks
+     * @param def Entity the one who defends
+     * @return the entetity health
+     */
     public static int attack(int roll, Entity att, Entity def){ // takes in the "dice" roll, attacker attack, attacked ac, attacked hp, name of the attacker, name of the attacked and returning new attacked hp
         int crit = 20 - (att.getLuck() / 10);
         if (((roll + att.hitBonus()) >= def.getAc() && def.getHp() > 0 && roll != 1) || roll >= (crit)){
@@ -1500,7 +1759,12 @@ public class Fight{
     }
 
     // ============= Time Wait Method ===========
-
+    /**
+     * a wait time wrapper using thread sleep to slow the game 
+     * and make a little bit of wait
+     * 
+     * @param time int for how much time to wait (1000 = 1 second)
+     */
     public static void wait(int time){
         try{
             Thread.sleep(time);
@@ -1691,15 +1955,15 @@ public class Fight{
                 
                 System.out.println("You are lvl: " + Color.PINK.get() + player.getLvl() + Color.RESET.get() + ". " + Color.BORANGE.get() + (player.xpNeeded() - player.getXp()) + Color.RESET.get() + " needed more xp to lvl up.  with a " + player.getWeapon().getName() + " that does: " + (player.getWeapon().getDiceCount() + player.getDiceCount()) + "d" + player.getWeapon().getDiceType() + " + " + (player.getWeapon().getBonus() + player.getModifier()) + " " + player.dicePoolToString() + " damage." );
                 System.out.println("You also have: " + Color.GREEN.get() + player.getBag() + Color.RESET.get() + "\n");
-                System.out.println("Armor: " + player.getArmor().getName() + " that gives: " + Color.BBLUE.get() + player.getArmor().getAc() + Color.RESET.get() + " ac.\n");
+                System.out.println("Armor: " + player.getArmor().getName() + " that return currents: " + Color.BBLUE.get() + player.getArmor().getAc() + Color.RESET.get() + " ac.\n");
                 System.out.println("You have: " + Color.YELLOW.get() + (String.valueOf(player.getGold())) + Color.RESET.get() + " gold.\n");
                 player.displayFeats();
                 System.out.println();
                 
                 Shop shop = new Shop();
                 shop.getItem().makePotion();
-                shop.getWeapon().update(rand.nextInt(player.getLvl() + 5) + 1, player.getLvl(), player);
-                shop.getArmor().updateArmor(player.getLvl(), player);
+                shop.getWeapon().update(rand.nextInt(player.getLvl() + 5) + 1, player);
+                shop.getArmor().updateArmor(player);
                 System.out.println("Please enter any key and press enter to continue.");
                 
                 scan.next();
@@ -1717,12 +1981,13 @@ public class Fight{
                 System.out.println("Do you want to go to the shop? y/n");
                 String shopInput = scan.next();
                 if(shopInput.equals("y") || shopInput.equals("yes")){
-                    player.setGold(shop.canBuyItem(player.getGold(), shop.getItem(), scan, player));
-                    player.setGold(shop.canBuyWeapon(player.getGold(), shop.getWeapon(), scan, player));
-                    player.setGold(shop.canBuyArmor(player.getGold(), shop.getArmor(), scan, player));
+                    shop.canBuyItem(shop.getItem(), scan, player);
+                    shop.canBuyWeapon(shop.getWeapon(), scan, player);
+                    shop.canBuyArmor( shop.getArmor(), scan, player);
             }
         }
     }
+
     if(gameWon){
     int score = (player.getXp() + ratCount + slimeCount + (wolfCount * 2) + (goblinCount * 3) + (dragonCount * 5) + player.getFeats().size() + player.getGold());
     System.out.println("======= " + Color.GREEN.get() + "W I N " + Color.RESET.get() + "=======");

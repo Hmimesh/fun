@@ -14,8 +14,6 @@ Features:
 - Java JDK (version 8 or higher).
 - A terminal or IDE that supports ANSI colors (e.g., VS Code, IntelliJ, or Linux/Mac terminals). Colors may not display in basic Windows Command Prompt.
 
-Developed with Java 25.
-
 ## How to Play
 1. Clone or download the repository.
 2. Open a terminal in the project folder.
@@ -45,4 +43,4 @@ lets learn together!
 ## Author
 - Ben Farjun (@Hmimesh on GitHub)
 
-Developed with java 25
+Developed with java 25.
