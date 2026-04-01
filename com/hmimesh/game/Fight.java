@@ -5,6 +5,10 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
+import javax.swing.*;
+import javax.swing.border.Border;
+
+import java.awt.*;
 
 
 /** In this program we are doing a random to check who will win in a psudo very simplified dnd style combat
@@ -19,20 +23,294 @@ import java.util.ArrayList;
 */ 
 
 
-//=================== COLOR ENUM =====================
+
+//================== WINDOW CLASS ===================
+class GameWindow{
+    private boolean _visible;
+    private String _name;
+    private JFrame _frame;
+    private JTextArea _logArea;
+    private JTextArea _sceneArea;
+    private JSplitPane _splitPane;
+    private JTextField _inputField;
+    private JScrollPane _logScroll;
+    private JScrollPane _sceneScroll;
+    private JPanel _bottomPanel; 
+    private JButton _sendButton;
+    private Player _player;
+    private boolean waitingForName = true;
+    private String _DEAFULT_NAME = "hero";
+
+    public  GameWindow(String windowname, boolean visible){
+        this._name = windowname;
+        this._visible = visible;
+        
+
+        _frame = new JFrame(windowname);
+        _logArea = new JTextArea();
+        _sceneArea = new JTextArea();
+        _inputField = new JTextField();
+        _sendButton = new JButton("Send");
+        _logScroll = new JScrollPane(_logArea);
+        _sceneScroll = new JScrollPane(_sceneArea);
+        _bottomPanel = new JPanel(new BorderLayout());
+        _player = new Player ();
+
+        // scene style no edits
+        _sceneArea.setEditable(false);
+        _sceneArea.setFont(new Font("Monospaced", Font.PLAIN, 14)); //ASCII font
+        
+        // log style no edits  
+        _logArea.setEditable(false);
+        _logArea.setLineWrap(true);
+        _logArea.setWrapStyleWord(true);
+
+        _splitPane = new JSplitPane(
+            JSplitPane.VERTICAL_SPLIT,
+            _sceneScroll,
+            _logScroll
+        );
+
+        _splitPane.setDividerLocation(400); //more for the scene that is on top less for the logger
+
+        _bottomPanel.setLayout(new BorderLayout());
+        _bottomPanel.add(_inputField, BorderLayout.CENTER);
+        _bottomPanel.add(_sendButton, BorderLayout.EAST);
+
+        _frame.setLayout(new BorderLayout());
+        _frame.add(_bottomPanel, BorderLayout.SOUTH);
+        _frame.add(_splitPane, BorderLayout.CENTER);
+        _frame.add(_bottomPanel, BorderLayout.SOUTH);
+
+        print("Welcom to the game!");
+        print("Please enter your name");
+        drawScene("""
+                [_________ \\    ||        ||   ||       ||   _=_=_=_=       =========
+                ||        ||    ||        ||   ||\\\\     ||   ||           |/         \\|
+                ||        ||    ||        ||   || \\\\    ||   ||   |___    ||         ||
+                ||        ||    ||        ||   ||  \\\\   ||   ||   |===\\\\  ||         ||  
+                ||        ||    ||        ||   ||   \\\\  //   ||       ||  |\\         /|
+                ||_______/_/    |_\\_______||   ||    \\\\//    ||\\______||   \\\\_______//
+                
+                 GOOD LUCK       HAVE FUN       A GAME MADE BY BEN FARJUN   @HMIMESH
+                
+                """);
+
+        _sendButton.addActionListener(e ->{
+            String text = _inputField.getText();
+            if(!text.equals("")){
+                print("> " + text);
+                _inputField.setText("");
+            }
+        });
+
+        _inputField.addActionListener(e -> {
+            String text = _inputField.getText();
+            if(!text.equals("")){
+                print("> " + text);
+                _inputField.setText("");
+            }
+        });
+        
+        _sendButton.addActionListener(e -> submitInput());
+        _inputField.addActionListener(e -> submitInput());
+
+
+        _sceneArea.setBackground(java.awt.Color.BLACK);
+        _sceneArea.setForeground(java.awt.Color.GREEN);
+
+        _logArea.setBackground(java.awt.Color.BLACK);
+        _logArea.setForeground(java.awt.Color.WHITE);
+
+        _inputField.setBackground(java.awt.Color.DARK_GRAY);
+        _inputField.setForeground(java.awt.Color.WHITE);
+
+        //set window
+        _frame.setSize(600, 500);
+        _frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        _frame.setVisible(visible);
+    }
+
+    public void print(String text){
+        _logArea.append(text + "\n");
+    }
+
+    public void drawScene(String scene){
+        _sceneArea.setText(scene);
+    }
+        
+    //=========== GETTERS ============
+    public String getName(){
+        return _name;
+    }
+    public boolean getVisible(){
+        return _visible;
+    }
+
+    //============= SETTERS ============
+    public void setName(String name){
+        this._name = name;
+        this._frame.setTitle(name);
+    }
+
+    public void setVisible(boolean visible){
+        this._visible = visible;
+        this._frame.setVisible(visible);
+    }
+
+    private void handleInput(String text){
+
+        if(waitingForName){
+            createNewPlayer(text);
+            waitingForName = false;
+            return;
+        }
+
+        Commands cmd = Commands.fromInput(text);
+
+        if(cmd != null && _player != null){
+            cmd.enable(this, _player);
+            return;
+        }
+
+        print("Unknow command, type help");
+    }
+
+    private void submitInput(){
+        String text = _inputField.getText().trim();
+        if(text.equals("")){
+            return;
+        }
+
+        print("> " + text);
+        _inputField.setText("");
+        handleInput(text);
+    }
+
+    private void createNewPlayer(String name){
+        if(name.equals("")){
+            name = _DEAFULT_NAME;
+        }
+
+        _player.newPlayer(name);
+        print("Welcome " + _player.getName() + "! and get ready for adventure!");
+    }
+
+  
+}
+    
+ 
+//================= COMMAND ENUM =====================
+
+enum Commands{
+    HELP("help", "HELP", "h", "Help"){
+        public void enable(GameWindow game, Player player) {
+            game.print("Commands: \n");
+            game.print("Before fight when facing with doors:  \n");
+            game.print("easy / e - for fighting easy creature \n");
+            game.print("hard / h - for fighting hard creature \n");
+            game.print("In shop and when asked: \n");
+            game.print("yes / y - for aggreing \n");
+            game.print("no / n - for disagreaing \n");
+            game.print("Terms: \n");
+            game.print("hp = health points you lose them you die. \n" );
+            game.print("ac = Armor class how hard are you to get hit. \n");
+            game.print("Dice pool = how many dice to hit you have \n");
+            game.print("Dice type = which type of dice you or your weapon have \n");
+            game.print("Weapon = your main way to attack \n");
+            game.print("Gold = money to buy things can get from enemies \n");
+            game.print("Xp = expirience points needed to level up \n");
+            game.print("Level = how strong an entity is \n");
+            game.print("Feats = features to get stronger in diffrent ways \n");
+            game.print("Items = items to use in battles (potions) \n");
+            game.print("Commands \n");
+            game.print("inventory / i - opens inventory \n");
+            game.print("feats / f - open your current feats \n");
+            game.print("stats / s - open your current stats \n");
+            
+        }
+    },
+    FEATS("feat", "f", "Feats", "F"){
+        public void enable(GameWindow game, Player player) {
+            game.print("Feats : " + player.getFeats() + "\n");
+        }
+    },
+    INVENTORY("inventory", "i", "Inventory", "I"){
+        public void enable(GameWindow game, Player player){
+            game.print(player.getName() +" inventory: \n");
+            game.print("|                   |\n");
+            game.print("| ARMOR: " + player.getArmor().getName() + "    |\n");
+            game.print("| WEAPON: " + player.getWeapon() + "            |\n");
+            game.print("| ITEMS: " + player.getBag() + "            |\n");
+            game.print("| Gold: " + player.getGold() + "            |\n");
+        }
+
+    },
+    STATS("stats", "s", "Stats", "S"){
+        public void enable(GameWindow game, Player player){
+            game.print(player.getName() + " here are your stats: \n");
+            game.print("AC: " + player.getAc() + "\n");
+            game.print("HP: " + player.getHp() + "/" + player.getMaxHP() + "\n");
+            game.print("Dice pool: " + player.getDiceCount());
+        }
+    };
+
+    String name1;
+    String name2;
+    String name3;
+    String name4;
+
+    Commands(String name1, String name2, String name3, String name4){
+        this.name1 = name1;
+        this.name2 = name2;
+        this.name3 = name3;
+        this.name4 = name4;
+        List<String> nameTotal = new ArrayList<>();
+        nameTotal.add(name1);
+        nameTotal.add(name2);
+        nameTotal.add(name3);
+        nameTotal.add(name4);
+    }
+
+    public boolean matches(String input){
+        return input.equalsIgnoreCase(name1)
+        || input.equalsIgnoreCase(name2)
+        || input.equalsIgnoreCase(name3)
+        || input.equalsIgnoreCase(name4);
+    }
+
+    public static Commands fromInput(String input){
+        for(Commands cmd : Commands.values()){
+            if(cmd.matches(input)){
+                return cmd;
+            }
+        }
+        return null;
+    }
+
+    public abstract void enable(GameWindow game, Player player);
+
+
+}
+
+
+
+
+//=================== COLOR ENUM ===================== 
+//TO DO CHANGE TO SWING COLOR SYSTEM
 
 /**
- * Color configuration checks if the users have a terminal ie console
+ * Acolor configuration checks if the users have a terminal ie console
  * 
  */
-class ColorConfig{
+class AcolorConfig{
     public static final boolean USE_COLOR = System.console() != null;
 }
 /**
- * enum for colors
+ * enum for colors for terminal!
  * 
  */
-enum Color{ // ANSI colors wrok only on more newer terminals, if wanna use it and see it please run on something like WSL / Powershell / Linux etc... and not on something like BlueJ
+enum Acolor{ // ANSI colors wrok only on more newer terminals, if wanna use it and see it please run on something like WSL / Powershell / Linux etc... and not on something like BlueJ
     RED("\u001B[31m"),
     GREEN("\u001B[32m"),
     YELLOW("\u001B[33m"),
@@ -53,7 +331,7 @@ enum Color{ // ANSI colors wrok only on more newer terminals, if wanna use it an
      * 
      * @param code take the lines needed for said colors
      */
-    Color(String code){
+    Acolor(String code){
         this.code = code;
     }
 
@@ -63,7 +341,7 @@ enum Color{ // ANSI colors wrok only on more newer terminals, if wanna use it an
      * @return return color or reset
      */
     public String get(){
-        return ColorConfig.USE_COLOR ? code : "";
+        return AcolorConfig.USE_COLOR ? code : "";
     }
 }
 
@@ -190,7 +468,7 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
         boolean isFinal = ending;
         if(chance <= 20 || isFinal == true ){
             this.boss = true;
-            this.setName(this.getName() + Color.BRED.get() + " Boss" + Color.RESET.get());
+            this.setName(this.getName() + Acolor.BRED.get() + " Boss" + Acolor.RESET.get());
             this.setGold(this.getGold() * 2);
             this.setXp(this.getXp() * 2);
             this.poisonCount = 0;
@@ -200,7 +478,7 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
             this.setHp(this.getHp() + 5 * ((this.getLvl() / 2) + 1));
             this.setBonus(this.getBonus() + rand.nextInt(5) + 1);
             if((rand.nextInt((100) + 1) - (this.getLvl() * 5) < 10 ) && this.getLvl() > 6){
-                this.setName(Color.CYAN.get() + "Legendary " + Color.RESET.get() + this.getName());
+                this.setName(Acolor.CYAN.get() + "Legendary " + Acolor.RESET.get() + this.getName());
                 this.setBonus(this.getBonus() + 1);
                 this.setAc(this.getAc() + 1);
                 this.setHp(this.getHp() + 10);
@@ -253,7 +531,7 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
 
         if (lucky >= 97){
             this.setLuck(1);
-            this.setName(this.getName() + Color.GREEN.get() + " Lucky" + Color.RESET.get());
+            this.setName(this.getName() + Acolor.GREEN.get() + " Lucky" + Acolor.RESET.get());
         }
         
         int minXp = lvl;
@@ -270,7 +548,7 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
             this.attack = dmg();
             this.setXp(this.getLvl() / 4 + rand.nextInt(5) + 1);
             this.setGold(rand.nextInt(10) + this.getXp());
-            this.setName(Color.BLUE.get() + "Slime" + Color.RESET.get());
+            this.setName(Acolor.BLUE.get() + "Slime" + Acolor.RESET.get());
             this.data = "Slime";
         }
         else if(this.getHp() > lvl * 8 && this.getHp() <= 12 * lvl){
@@ -282,7 +560,7 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
             this.attack = dmg();
             this.setXp(this.getLvl() / 3 + rand.nextInt(6) + 2);
             this.setGold(rand.nextInt(20) + this.getXp());
-            this.setName(Color.RED.get() + "Wolf" + Color.RESET.get());
+            this.setName(Acolor.RED.get() + "Wolf" + Acolor.RESET.get());
             this.data = "Wolf";
         }
         else if(this.getHp() > 12 * lvl && this.getHp() <= 17 * lvl){
@@ -298,7 +576,7 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
             this.attack = dmg();
             this.setXp(this.getLvl() / 2 + rand.nextInt(7) + 3);
             this.setGold(rand.nextInt(40) + 1 + this.getXp());
-            this.setName(Color.BGREEN.get() + "Goblin" + Color.RESET.get());
+            this.setName(Acolor.BGREEN.get() + "Goblin" + Acolor.RESET.get());
             this.data = "Goblin";
         }
         else if(this.getHp() > 17 * lvl && this.getHp() <= 20 * lvl && lvl >= 3){
@@ -310,7 +588,7 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
             this.attack = dmg();
             this.setXp(this.getLvl() + rand.nextInt(15) +  4);
             this.setGold(rand.nextInt(100) + 50);
-            this.setName(Color.PURPLE.get() + "Dragon" + Color.RESET.get());
+            this.setName(Acolor.PURPLE.get() + "Dragon" + Acolor.RESET.get());
             this.data = "Dragon";
         }else{
             this.setHp(10);
@@ -322,7 +600,7 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
             this.attack = dmg();
             this.setXp(1);
             this.setGold(1);
-            this.setName(Color.YELLOW.get() + "RAT" + Color.RESET.get());
+            this.setName(Acolor.YELLOW.get() + "RAT" + Acolor.RESET.get());
             this.data = "Rat";
         }
         if (this.getXp() <= 0){
@@ -402,7 +680,7 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
         this.setHp(this.getHp() + 5 * ((this.getLvl() / 2) + 1));
         this.setBonus(this.getBonus() + rand.nextInt(5) + 1);
 
-        this.setName(Color.BRED.get() + "Final Boss " + Color.RESET.get() + Color.CYAN.get() + "Evil " + player.getName() + Color.RESET.get());
+        this.setName(Acolor.BRED.get() + "Final Boss " + Acolor.RESET.get() + Acolor.CYAN.get() + "Evil " + player.getName() + Acolor.RESET.get());
 }
 
     // ===== GETTERS =====
@@ -568,15 +846,15 @@ class Weapon{ // weapons and their abilities
                 this.bonus += 2;
                 this.price += (int)(this.price * (0.50));
             }else if (chance + luck >= 80 && chance < 90){
-                this.name = Color.GREEN.get() + "Epic " + Color.RESET.get() + this.name;
+                this.name = Acolor.GREEN.get() + "Epic " + Acolor.RESET.get() + this.name;
                 this.bonus += 3;
                 this.price += (int)(this.price * (0.70));
             }else if(chance + luck >= 90 && chance < 100 && playerlvl > 5){
-                this.name = Color.PURPLE.get() + "Masterwork " + Color.RESET.get() + this.name;
+                this.name = Acolor.PURPLE.get() + "Masterwork " + Acolor.RESET.get() + this.name;
                 this.bonus += 4;
                 this.price += (int)(this.price * (0.90));
             }else if (chance + luck == 100 && playerlvl > 6) {
-                this.name = Color.CYAN.get() + "Legendary " + Color.RESET.get() + this.name;
+                this.name = Acolor.CYAN.get() + "Legendary " + Acolor.RESET.get() + this.name;
                 this.bonus += 5;
                 this.diceCount += 1;
                 this.price += this.price;
@@ -585,7 +863,7 @@ class Weapon{ // weapons and their abilities
 
         }else if(playerlvl < 3){
             if(chance > 93){
-                this.name =Color.GREEN.get() + "Epic " + Color.RESET.get() + this.name;
+                this.name =Acolor.GREEN.get() + "Epic " + Acolor.RESET.get() + this.name;
                 this.bonus += 3;
                 this.price += (int)(this.price * (0.70));
             }else if(chance  > 87){
@@ -612,18 +890,18 @@ class Weapon{ // weapons and their abilities
 
         if (playerLevel > 5){
             if (chance + luck == 100){
-                this.name = Color.CYAN.get() + "Tripled " + Color.RESET.get() + this.name;
+                this.name = Acolor.CYAN.get() + "Tripled " + Acolor.RESET.get() + this.name;
                 this.diceCount *= 3;
                 this.price += this.price;
             }else if (chance + luck > 80){
-                this.name = Color.PURPLE.get() + "Doubled " + Color.RESET.get() + this.name;
+                this.name = Acolor.PURPLE.get() + "Doubled " + Acolor.RESET.get() + this.name;
                 this.diceCount *= 2;
                 this.price += (int)(this.price * (0.80));
             }
         
         }else if (playerLevel < 5){
             if (chance  + luck == 100){
-                this.name = Color.PURPLE.get() + "Doubled " + Color.RESET.get() + this.name;
+                this.name = Acolor.PURPLE.get() + "Doubled " + Acolor.RESET.get() + this.name;
                 this.diceCount *= 2;
                 this.price += (int)(this.price * (0.80));
             }
@@ -644,44 +922,44 @@ enum Feat{
     POWER("POWER", "Bonus damage +1", "damage", 1){
         public void apply(Player p){
             p.setModifier(p.getModifier() + 1);
-            System.out.println(Color.PURPLE.get() + "You gained POWER! Damage bonus +1" + Color.RESET.get());
+            System.out.println(Acolor.PURPLE.get() + "You gained POWER! Damage bonus +1" + Acolor.RESET.get());
         }
     },
     TANK("TANK", "Max HP +10", "health",  1){
         public void apply(Player p){
             p.setMaxHP(p.getMaxHP() + 10);
             p.setHp(p.getHp() + 10);
-            System.out.println(Color.CYAN.get() + "You gained TANK! Max HP +10" + Color.RESET.get());
+            System.out.println(Acolor.CYAN.get() + "You gained TANK! Max HP +10" + Acolor.RESET.get());
         }
     },
     LUCK("LUCK", "Chance +10%", "luck", 3){
         public void apply(Player p){
             p.setLuck(p.getLuck() + 10);
-            System.out.println(Color.YELLOW.get() + "You gained LUCK! Chance +10%" + Color.RESET.get());
+            System.out.println(Acolor.YELLOW.get() + "You gained LUCK! Chance +10%" + Acolor.RESET.get());
         }
     },
     DODGE("DODGE", "AC +1 (Armor Class)", "defense", 1){
         public void apply(Player p){
             p.setAc(p.getAc() + 1);
-            System.out.println(Color.GREEN.get() + "You gained DODGE! AC +1" + Color.RESET.get());
+            System.out.println(Acolor.GREEN.get() + "You gained DODGE! AC +1" + Acolor.RESET.get());
         }
     },
     DICER("DICER", "One more for attack dice", "damage",  5){
         public void apply(Player p){
             p.setDiceCount(p.getDiceCount() + 1);
-            System.out.println(Color.ORANGE.get() + "You gained DICER! One more for attack dice" + Color.RESET.get());
+            System.out.println(Acolor.ORANGE.get() + "You gained DICER! One more for attack dice" + Acolor.RESET.get());
         }
     },
     RICH("RICH", "Get 300 gold", "gold", 1){
         public void apply(Player p){
             p.setGold(p.getGold() + 300);
-            System.out.println(Color.BGREEN.get() + "You gained RICH! 300 gold" + Color.RESET.get());
+            System.out.println(Acolor.BGREEN.get() + "You gained RICH! 300 gold" + Acolor.RESET.get());
         }
     },
     ALCHEMIST("ALCHEMIST", "Better potions", "health", 2){
         public void apply(Player p){
             p.setPotionHeal(p.getPotionHeal() + p.getMaxHP() / 10);
-            System.out.println(Color.BGREEN.get() + "You gained ALCHEMIST! Better potions" + Color.RESET.get());
+            System.out.println(Acolor.BGREEN.get() + "You gained ALCHEMIST! Better potions" + Acolor.RESET.get());
         }
     },
     FIREMAGIC("FIRE MAGIC", "Add 1d6 of fire damage", "damage", 5){
@@ -689,7 +967,7 @@ enum Feat{
             p.setFireMage(true);
             p.dicePool();
             p.setFireMage(false);
-            System.out.println(Color.BRED.get() + "You gained FIRE MAGIC! Add 1d6 of fire damage" + Color.RESET.get());
+            System.out.println(Acolor.BRED.get() + "You gained FIRE MAGIC! Add 1d6 of fire damage" + Acolor.RESET.get());
         }
     },
     POISON("POISON", "Add a chance of 1d4 of poison damage", "damage", 3){
@@ -698,7 +976,7 @@ enum Feat{
             p.setCanPoison(true);
             p.dicePool();
             p.setPoisonMage(false);
-            System.out.println(Color.BGREEN.get() + "You gained POISON! Add a consistent 1d4 of poison damage" + Color.RESET.get());
+            System.out.println(Acolor.BGREEN.get() + "You gained POISON! Add a consistent 1d4 of poison damage" + Acolor.RESET.get());
         }
     },
     WATERMAGE("Water Mage", "Add 1d8 of water damage", "damage", 5){
@@ -706,13 +984,13 @@ enum Feat{
             p.setWaterMage(true);
             p.dicePool();
             p.setWaterMage(false);
-            System.out.println(Color.BLUE.get() + "You gained WATER MAGE! Add 1d8 of water damage" + Color.RESET.get());
+            System.out.println(Acolor.BLUE.get() + "You gained WATER MAGE! Add 1d8 of water damage" + Acolor.RESET.get());
         }
     },
     RECOVERY("Recovery", "heal 10% of max hp and the end of battles", "health", 2){
         public void apply(Player p){
             p.setRecovery(p.getRecovery() + 10);
-            System.out.println(Color.RED.get() + "You gained RECOVERY! heal 10% of max hp and the end of battles" + Color.RESET.get());
+            System.out.println(Acolor.RED.get() + "You gained RECOVERY! heal 10% of max hp and the end of battles" + Acolor.RESET.get());
         }
     };
 
@@ -748,22 +1026,22 @@ enum Feat{
     String rName;
         switch(rarity){
         case 2:
-            rName = Color.BLUE.get() + "Uncommon" + Color.RESET.get();
+            rName = Acolor.BLUE.get() + "Uncommon" + Acolor.RESET.get();
             break;
         case 3:
-            rName = Color.GREEN.get() + "Rare" + Color.RESET.get();
+            rName = Acolor.GREEN.get() + "Rare" + Acolor.RESET.get();
             break;
         case 4:
-            rName = Color.YELLOW.get() + "Epic" + Color.RESET.get();
+            rName = Acolor.YELLOW.get() + "Epic" + Acolor.RESET.get();
             break;
         case 5:
-            rName = Color.PURPLE.get() + "Legendary" + Color.RESET.get();
+            rName = Acolor.PURPLE.get() + "Legendary" + Acolor.RESET.get();
             break;
         default:
             rName = "Common";
        
 }
-    System.out.println(Color.PURPLE.get() + name + Color.RESET.get() + " - " + description +   "(" + rName + ")" );
+    System.out.println(Acolor.PURPLE.get() + name + Acolor.RESET.get() + " - " + description +   "(" + rName + ")" );
 }
 }
 
@@ -805,7 +1083,7 @@ class Player extends Entity{
      * @param newName String user input name 
      */
     public void newPlayer(String newName){ //when starting new game init for the user
-        this.setName(Color.ORANGE.get() + newName + Color.RESET.get());
+        this.setName(Acolor.ORANGE.get() + newName + Acolor.RESET.get());
         this.setLvl(1);
         this.setXp(0);
         this.MAXHP = rand.nextInt(6) + 1 + 40;
@@ -1007,10 +1285,10 @@ class Player extends Entity{
 
             switch(diceType){
                 case 6:
-                    diceString = Color.RED.get() + "d6" + Color.RESET.get();
+                    diceString = Acolor.RED.get() + "d6" + Acolor.RESET.get();
                     break;
                 case 8:
-                    diceString = Color.BLUE.get() + "d8" + Color.RESET.get();
+                    diceString = Acolor.BLUE.get() + "d8" + Acolor.RESET.get();
                     break;
                 default:
                     diceString = "";
@@ -1037,10 +1315,10 @@ class Player extends Entity{
                 extraDamage += roll;
                 switch(diceType){
                     case 6:
-                        System.out.println(Color.RED.get() + "Fire damage: " + roll + Color.RESET.get());
+                        System.out.println(Acolor.RED.get() + "Fire damage: " + roll + Acolor.RESET.get());
                         break;
                     case 8:
-                        System.out.println( Color.BLUE.get() +"Water damage: "  + roll + Color.RESET.get());
+                        System.out.println( Acolor.BLUE.get() +"Water damage: "  + roll + Acolor.RESET.get());
                         break;
                     default:
                         System.out.println("[DEBUG] Unknown damage type: " + roll);
@@ -1129,14 +1407,14 @@ class Player extends Entity{
         if (this.isLowHealth()){
             if (this.hasAnyPotion()){
                 String used = useBestPotion();
-                System.out.println("You used a " + Color.RED.get() + used + Color.RESET.get() + ". HP is now " + Color.BLUE.get() + (String.valueOf(this.getHp())) + Color.RESET.get() + "/" + Color.GREEN.get() + (String.valueOf(this.MAXHP)) + Color.RESET.get() + ".");
+                System.out.println("You used a " + Acolor.RED.get() + used + Acolor.RESET.get() + ". HP is now " + Acolor.BLUE.get() + (String.valueOf(this.getHp())) + Acolor.RESET.get() + "/" + Acolor.GREEN.get() + (String.valueOf(this.MAXHP)) + Acolor.RESET.get() + ".");
             } else {
-                System.out.println(Color.RED.get() + "No potions!" + Color.RESET.get());
+                System.out.println(Acolor.RED.get() + "No potions!" + Acolor.RESET.get());
             }
         }if (this.getHp() <= 0 && this.bag.getOrDefault("revive", 0) > 0){
             this.setHp(this.MAXHP / 2);
             this.bag.put("revive", this.bag.get("revive") - 1);
-            System.out.println("You are not dead yet! " + Color.RED.get() + "used a revive" + Color.RESET.get() + ". HP is now " + Color.BLUE.get() + (String.valueOf(this.getHp())) + Color.RESET.get() + "/" + Color.GREEN.get() + (String.valueOf(this.MAXHP)) + Color.RESET.get() + ".");
+            System.out.println("You are not dead yet! " + Acolor.RED.get() + "used a revive" + Acolor.RESET.get() + ". HP is now " + Acolor.BLUE.get() + (String.valueOf(this.getHp())) + Acolor.RESET.get() + "/" + Acolor.GREEN.get() + (String.valueOf(this.MAXHP)) + Acolor.RESET.get() + ".");
         }
     }
 
@@ -1158,7 +1436,7 @@ class Player extends Entity{
     public void checkLvlUp(){ // checkes lvl up each time killing an enemy
         while (this.getXp() >= xpNeeded()){
             this.setLvl(this.getLvl() + 1);
-            System.out.println(Color.GREEN.get() + "lvl Up! you are lvl " + String.valueOf(this.getLvl()) + Color.RESET.get());
+            System.out.println(Acolor.GREEN.get() + "lvl Up! you are lvl " + String.valueOf(this.getLvl()) + Acolor.RESET.get());
             this.MAXHP += rand.nextInt(10) + 1 + this.getLvl();
             this.setHp(this.MAXHP);
             System.out.println("Your max hp is now " + this.MAXHP);
@@ -1219,7 +1497,7 @@ class Player extends Entity{
             feat2 = weightedFeats.get(rand.nextInt(weightedFeats.size()));
         }
         
-        System.out.println(Color.PURPLE.get() + "\n===== FEAT SELECTION =====" + Color.RESET.get());
+        System.out.println(Acolor.PURPLE.get() + "\n===== FEAT SELECTION =====" + Acolor.RESET.get());
         System.out.println("You can choose one feat:");
         System.out.println("Option 1: ");
         feat1.display();
@@ -1275,7 +1553,7 @@ class Player extends Entity{
             feat3 = weightedFeats.get(rand.nextInt(weightedFeats.size()));
         }
         
-        System.out.println(Color.CYAN.get() + "\n===== BOSS DEFEATED! FEAT REWARD =====" + Color.RESET.get());
+        System.out.println(Acolor.CYAN.get() + "\n===== BOSS DEFEATED! FEAT REWARD =====" + Acolor.RESET.get());
         System.out.println("You defeated a boss! Choose one feat:");
         System.out.println("Option 1: ");
         feat1.display();
@@ -1336,7 +1614,7 @@ class Player extends Entity{
             System.out.println("No feats acquired yet.");
             return;
         }
-        System.out.println(Color.PURPLE.get() + "Your Feats:" + Color.RESET.get());
+        System.out.println(Acolor.PURPLE.get() + "Your Feats:" + Acolor.RESET.get());
         for(Feat f : feats.keySet()){
             System.out.println("  - " + f.name + " (x" + feats.get(f) + ")");
         }
@@ -1395,7 +1673,7 @@ enum Cheats{
     public abstract void active(Player p);
 
     public void display(){
-    System.out.println(Color.BBLUE.get() + "CHEATS ACTIVE! " + this.name + Color.RESET.get());
+    System.out.println(Acolor.BBLUE.get() + "CHEATS ACTIVE! " + this.name + Acolor.RESET.get());
     }
 }
 
@@ -1528,22 +1806,22 @@ class Armor{ // same logic as wep except for protaction
                 this.ac += 2;
                 this.price += (int)(this.price * (0.50));
             }else if (chance >= 80 && chance < 90){
-                this.name = Color.GREEN.get() + "Epic " + Color.RESET.get() + this.name;
+                this.name = Acolor.GREEN.get() + "Epic " + Acolor.RESET.get() + this.name;
                 this.ac += 3;
                 this.price += (int)(this.price * (0.70));
             }else if(chance >= 90 && chance < 100 && playerlvl > 5){
-                this.name = Color.PURPLE.get() + "Masterwork " + Color.RESET.get() + this.name;
+                this.name = Acolor.PURPLE.get() + "Masterwork " + Acolor.RESET.get() + this.name;
                 this.ac += 4;
                 this.price += (int)(this.price * (0.90));
             }else if(chance == 100 && playerlvl > 6){
-                this.name = Color.CYAN.get()  + "Legendary " + Color.RESET.get() + this.name;
+                this.name = Acolor.CYAN.get()  + "Legendary " + Acolor.RESET.get() + this.name;
                 this.ac += 5;
                 this.price += this.price;
             }
         }
         else if(playerlvl < 3){
             if(chance > 93){
-                this.name = Color.GREEN.get() + "Epic " + Color.RESET.get() + this.name;
+                this.name = Acolor.GREEN.get() + "Epic " + Acolor.RESET.get() + this.name;
                 this.ac += 3;
                 this.price += (int)(this.price * (0.50));
             }else if(chance  > 87){
@@ -1652,8 +1930,8 @@ class Shop{ // Can be accesed at the end of fights
         if (this.arm.getAc() == 0){
             this.arm = new Armor();
         }
-        System.out.println("There is " + armName.getName() + " its price is " + Color.YELLOW.get() + (String.valueOf(armName.getPrice())) + Color.RESET.get());
-        System.out.println("You have " + Color.YELLOW.get() + (String.valueOf(user.getGold()) + Color.RESET.get()));
+        System.out.println("There is " + armName.getName() + " its price is " + Acolor.YELLOW.get() + (String.valueOf(armName.getPrice())) + Acolor.RESET.get());
+        System.out.println("You have " + Acolor.YELLOW.get() + (String.valueOf(user.getGold()) + Acolor.RESET.get()));
         if(user.getGold() >= armName.getPrice()){
             System.out.println("Do you want to buy this armor? " + armName.getName() + " y/n");
             System.out.println("Armor class: " + armName.getAc());
@@ -1692,7 +1970,7 @@ public class Fight{
         if((player.canCastPoison() == true && (d100 + player.getLuck()) > 80)){
             enemy.setPoisoned(true);
             enemy.setPoisonCount(3); //last 3 ticks
-            System.out.println(enemy.getName() + Color.BGREEN.get() + " Is poisoned!" + Color.RESET.get());
+            System.out.println(enemy.getName() + Acolor.BGREEN.get() + " Is poisoned!" + Acolor.RESET.get());
         }
     }
 
@@ -1713,10 +1991,10 @@ public class Fight{
         int hit = player.poisondmg();
         enemy.setHp(enemy.getHp() - hit);
         enemy.setPoisonCount(enemy.getPoisonCount() - 1);
-        System.out.println(enemy.getName() + Color.BGREEN.get() + " Is poisoned! and was hit by: " + hit + Color.RESET.get() + " hp is : " + enemy.getHp());
+        System.out.println(enemy.getName() + Acolor.BGREEN.get() + " Is poisoned! and was hit by: " + hit + Acolor.RESET.get() + " hp is : " + enemy.getHp());
         if(enemy.getPoisonCount() <= 0){
             enemy.setPoisoned(false);
-            System.out.println(enemy.getName() + Color.BGREEN.get() + " Is not poisoned anymore!" + Color.RESET.get());
+            System.out.println(enemy.getName() + Acolor.BGREEN.get() + " Is not poisoned anymore!" + Acolor.RESET.get());
         }
     }
 
@@ -1739,11 +2017,11 @@ public class Fight{
                  //Critical double damgae
                 int dmg = att.dmg() * 2;
                 def.setHp(def.getHp() - dmg);
-                System.out.println(Color.RED.get() + "CRITICAL!!! " + Color.RESET.get() + att.getName() + " hit! " + def.getName() + " for: " + Color.RED.get() + dmg + Color.RESET.get() + " hp is now at: " + def.getHp() + " points!");
+                System.out.println(Acolor.RED.get() + "CRITICAL!!! " + Acolor.RESET.get() + att.getName() + " hit! " + def.getName() + " for: " + Acolor.RED.get() + dmg + Acolor.RESET.get() + " hp is now at: " + def.getHp() + " points!");
             }else{
                 int hit = att.dmg();
                 def.setHp(def.getHp() - hit);
-                System.out.println(att.getName() + " hit " + def.getName() + " for: " + Color.RED.get() + hit + Color.RESET.get() + " " + def.getName() + " hp is: " + def.getHp() + " points!");
+                System.out.println(att.getName() + " hit " + def.getName() + " for: " + Acolor.RED.get() + hit + Acolor.RESET.get() + " " + def.getName() + " hp is: " + def.getHp() + " points!");
 
             }
             if(att instanceof Player && def instanceof Enemy){ //poison machanics!
@@ -1791,7 +2069,15 @@ public class Fight{
         final String DEF_NAME = "hero";
         boolean gameWon = false;
         boolean finalBossSpawned = false;
+        SwingUtilities.invokeLater(() ->{
+           GameWindow game =  new GameWindow("Game", true);
+            game.print("ENTER_NAME");
+
+        });
         
+        
+
+    
         //diffrent types of counts 
         int fightCount = 0;
         int slimeCount = 0;
@@ -1811,16 +2097,16 @@ public class Fight{
             player.setName(player.getName().substring(0, 30));
         }
 
-        System.out.println("Hello " + Color.ORANGE.get() + player.getName() + Color.RESET.get() + ".");
+        System.out.println("Hello " + Acolor.ORANGE.get() + player.getName() + Acolor.RESET.get() + ".");
         System.out.println("This are your stats: ");
         
         wait(500);
         
-        System.out.println("hp: " + Color.BLUE.get() + player.getHp() + Color.RESET.get());
-        System.out.println("ac: " + Color.RED.get() + player.getAc() + Color.RESET.get());
+        System.out.println("hp: " + Acolor.BLUE.get() + player.getHp() + Acolor.RESET.get());
+        System.out.println("ac: " + Acolor.RED.get() + player.getAc() + Acolor.RESET.get());
         System.out.println("Weapon: " + player.getWeapon().getName() + " damage die: " + player.getWeapon().getDiceCount() + "d" + player.getWeapon().getDiceType());
         System.out.println("Armor: " + player.getArmor().getName() + " ac: " + player.getArmor().getAc());
-        System.out.println("Gold: " + Color.YELLOW.get() + player.getGold() + Color.RESET.get());
+        System.out.println("Gold: " + Acolor.YELLOW.get() + player.getGold() + Acolor.RESET.get());
         wait(500);
 
         while(!userAnsware1.equals("y") && !userAnsware1.equals("yes")){ //loop for the first init
@@ -1909,21 +2195,21 @@ public class Fight{
                 if(player.getBag().getOrDefault("revive", 0) > 0){
                     player.setHp(player.getMaxHP() / 2);
                     player.getBag().put("revive", player.getBag().get("revive") - 1);
-                    System.out.println("You have been revived! " + Color.BBLUE.get() + player.getHp() + Color.RESET.get());
+                    System.out.println("You have been revived! " + Acolor.BBLUE.get() + player.getHp() + Acolor.RESET.get());
                 }else {
                     System.out.println("You have been defeated!");
         
                     wait(1000);
 
-                    System.out.println("========= "+ Color.RED.get() + "R I P" + Color.RESET.get() + " =========");
+                    System.out.println("========= "+ Acolor.RED.get() + "R I P" + Acolor.RESET.get() + " =========");
                     wait(300);
                     System.out.println("Name: " + player.getName());
-                    System.out.println("lvl: " + Color.BLUE.get() + player.getLvl() + Color.RESET.get());
-                    System.out.println("hp: " + Color.GREEN.get() + player.getMaxHP() + Color.RESET.get());
+                    System.out.println("lvl: " + Acolor.BLUE.get() + player.getLvl() + Acolor.RESET.get());
+                    System.out.println("hp: " + Acolor.GREEN.get() + player.getMaxHP() + Acolor.RESET.get());
                     System.out.println("ac: " + player.getAc());
-                    System.out.println("gold: " + Color.YELLOW.get() + (String.valueOf(player.getGold())) + Color.RESET.get());
+                    System.out.println("gold: " + Acolor.YELLOW.get() + (String.valueOf(player.getGold())) + Acolor.RESET.get());
                     System.out.println("You have fought: " + fightCount + " fights");
-                    System.out.println("was slayed by " + Color.RED.get() + e.getName() + Color.RESET.get());
+                    System.out.println("was slayed by " + Acolor.RED.get() + e.getName() + Acolor.RESET.get());
                     wait(300);
                     System.out.println("=========================");
 
@@ -1953,7 +2239,7 @@ public class Fight{
                 fightCount += 1;
                 e.dropChance(player.getHp(), player.getLvl(), player.getBag(), player);;
                 player.recoverAfterBattle();
-                System.out.println("\nYou Got " + e.getXp() + " xp and " + Color.YELLOW.get() + (String.valueOf(e.getGold())) + Color.RESET.get() + " gold!\n");
+                System.out.println("\nYou Got " + e.getXp() + " xp and " + Acolor.YELLOW.get() + (String.valueOf(e.getGold())) + Acolor.RESET.get() + " gold!\n");
                 player.checkLvlUp();
                 
                 // Check if boss was defeated and offer feat
@@ -1961,10 +2247,10 @@ public class Fight{
                     player.offerBossFeat();
                 }
                 
-                System.out.println("You are lvl: " + Color.PINK.get() + player.getLvl() + Color.RESET.get() + ". " + Color.BORANGE.get() + (player.xpNeeded() - player.getXp()) + Color.RESET.get() + " needed more xp to lvl up.  with a " + player.getWeapon().getName() + " that does: " + (player.getWeapon().getDiceCount() + player.getDiceCount()) + "d" + player.getWeapon().getDiceType() + " + " + (player.getWeapon().getBonus() + player.getModifier()) + " " + player.dicePoolToString() + " damage." );
-                System.out.println("You also have: " + Color.GREEN.get() + player.getBag() + Color.RESET.get() + "\n");
-                System.out.println("Armor: " + player.getArmor().getName() + " that return currents: " + Color.BBLUE.get() + player.getArmor().getAc() + Color.RESET.get() + " ac.\n");
-                System.out.println("You have: " + Color.YELLOW.get() + (String.valueOf(player.getGold())) + Color.RESET.get() + " gold.\n");
+                System.out.println("You are lvl: " + Acolor.PINK.get() + player.getLvl() + Acolor.RESET.get() + ". " + Acolor.BORANGE.get() + (player.xpNeeded() - player.getXp()) + Acolor.RESET.get() + " needed more xp to lvl up.  with a " + player.getWeapon().getName() + " that does: " + (player.getWeapon().getDiceCount() + player.getDiceCount()) + "d" + player.getWeapon().getDiceType() + " + " + (player.getWeapon().getBonus() + player.getModifier()) + " " + player.dicePoolToString() + " damage." );
+                System.out.println("You also have: " + Acolor.GREEN.get() + player.getBag() + Acolor.RESET.get() + "\n");
+                System.out.println("Armor: " + player.getArmor().getName() + " that return currents: " + Acolor.BBLUE.get() + player.getArmor().getAc() + Acolor.RESET.get() + " ac.\n");
+                System.out.println("You have: " + Acolor.YELLOW.get() + (String.valueOf(player.getGold())) + Acolor.RESET.get() + " gold.\n");
                 player.displayFeats();
                 System.out.println();
                 
@@ -1983,9 +2269,9 @@ public class Fight{
                 }
                 
                 System.out.println("In the shop there are:");
-                System.out.println(shop.getItem().getName() + " priced at: " + Color.YELLOW.get() + (String.valueOf(shop.getItem().getPrice())) + Color.RESET.get());
-                System.out.println(shop.getWeapon().getName() + " priced at: " + Color.YELLOW.get() + (String.valueOf(shop.getWeapon().getPrice())) + Color.RESET.get());
-                System.out.println(shop.getArmor().getName() + " priced at: " + Color.YELLOW.get() + (String.valueOf(shop.getArmor().getPrice())) + Color.RESET.get());
+                System.out.println(shop.getItem().getName() + " priced at: " + Acolor.YELLOW.get() + (String.valueOf(shop.getItem().getPrice())) + Acolor.RESET.get());
+                System.out.println(shop.getWeapon().getName() + " priced at: " + Acolor.YELLOW.get() + (String.valueOf(shop.getWeapon().getPrice())) + Acolor.RESET.get());
+                System.out.println(shop.getArmor().getName() + " priced at: " + Acolor.YELLOW.get() + (String.valueOf(shop.getArmor().getPrice())) + Acolor.RESET.get());
                 System.out.println("Do you want to go to the shop? y/n");
                 String shopInput = scan.next();
                 if(shopInput.equals("y") || shopInput.equals("yes")){
@@ -1998,19 +2284,19 @@ public class Fight{
 
     if(gameWon){
     int score = (player.getXp() + ratCount + slimeCount + (wolfCount * 2) + (goblinCount * 3) + (dragonCount * 5) + player.getFeats().size() + player.getGold());
-    System.out.println("======= " + Color.GREEN.get() + "W I N " + Color.RESET.get() + "=======");
+    System.out.println("======= " + Acolor.GREEN.get() + "W I N " + Acolor.RESET.get() + "=======");
     System.out.println("You have won the game!");
     System.out.println(player.getName() + " have fought: " + fightCount + " fights");
     System.out.println(player.getName() + " have: " + player.getGold() + " gold");
     System.out.println(player.getName() +  " You have: " + player.getXp() + " xp");
     System.out.println("Items: " + player.getArmor().getName() + ", " + player.getWeapon().getName() + ".");
     System.out.println("You have defeated: ");
-    System.out.println(Color.YELLOW.get() + "Rats: " + ratCount + Color.RESET.get());
-    System.out.println(Color.BLUE.get() + "Slimes: " + slimeCount + Color.RESET.get());
-    System.out.println(Color.RED.get() + "Wolves: " + wolfCount + Color.RESET.get());
-    System.out.println(Color.BGREEN.get() + "Goblins: " + goblinCount + Color.RESET.get());
-    System.out.println(Color.PURPLE.get() + "Dragons: " + dragonCount + Color.RESET.get());
-    System.out.println("\n" + Color.CYAN.get() + "Feats Acquired:" + Color.RESET.get());
+    System.out.println(Acolor.YELLOW.get() + "Rats: " + ratCount + Acolor.RESET.get());
+    System.out.println(Acolor.BLUE.get() + "Slimes: " + slimeCount + Acolor.RESET.get());
+    System.out.println(Acolor.RED.get() + "Wolves: " + wolfCount + Acolor.RESET.get());
+    System.out.println(Acolor.BGREEN.get() + "Goblins: " + goblinCount + Acolor.RESET.get());
+    System.out.println(Acolor.PURPLE.get() + "Dragons: " + dragonCount + Acolor.RESET.get());
+    System.out.println("\n" + Acolor.CYAN.get() + "Feats Acquired:" + Acolor.RESET.get());
     player.displayFeats();
     System.out.println("\nYour score is: " + score);
     System.out.println("=====================");
