@@ -40,6 +40,19 @@ class GameWindow{
     private Player _player;
     private boolean waitingForName = true;
     private String _DEAFULT_NAME = "hero";
+    private String _DEAFULT_SCENE = """
+                [_________ \\    ||        ||   ||       ||   _=_=_=_=       =========
+                ||        ||    ||        ||   ||\\\\     ||   ||           |/         \\|
+                ||        ||    ||        ||   || \\\\    ||   ||   |___    ||         ||
+                ||        ||    ||        ||   ||  \\\\   ||   ||   |===\\\\  ||         ||  
+                ||        ||    ||        ||   ||   \\\\  //   ||       ||  |\\         /|
+                ||_______/_/    |_\\_______||   ||    \\\\//    ||\\______||   \\\\_______//
+                
+                 GOOD LUCK       HAVE FUN       A GAME MADE BY BEN FARJUN   @HMIMESH
+                
+                """;
+    private String _state;
+    private String _scene;
 
     public  GameWindow(String windowname, boolean visible){
         this._name = windowname;
@@ -82,6 +95,7 @@ class GameWindow{
         _frame.add(_splitPane, BorderLayout.CENTER);
         _frame.add(_bottomPanel, BorderLayout.SOUTH);
 
+        _state = "ENTER_NAME";
         print("Welcom to the game!");
         print("Please enter your name");
         drawScene("""
@@ -96,22 +110,7 @@ class GameWindow{
                 
                 """);
 
-        _sendButton.addActionListener(e ->{
-            String text = _inputField.getText();
-            if(!text.equals("")){
-                print("> " + text);
-                _inputField.setText("");
-            }
-        });
 
-        _inputField.addActionListener(e -> {
-            String text = _inputField.getText();
-            if(!text.equals("")){
-                print("> " + text);
-                _inputField.setText("");
-            }
-        });
-        
         _sendButton.addActionListener(e -> submitInput());
         _inputField.addActionListener(e -> submitInput());
 
@@ -146,7 +145,9 @@ class GameWindow{
     public boolean getVisible(){
         return _visible;
     }
-
+    public String getState(){
+        return _state;
+    }
     //============= SETTERS ============
     public void setName(String name){
         this._name = name;
@@ -158,11 +159,27 @@ class GameWindow{
         this._frame.setVisible(visible);
     }
 
+    public void setState(String state){
+        this._state = state;
+    }
+
+    public void setScene(String scene){
+        this._scene = scene;
+        drawScene(scene);
+    }
+    public void setIsWaitingForPlayer(boolean waiting){
+        this.waitingForName = waiting;
+    }
+
     private void handleInput(String text){
 
-        if(waitingForName){
-            createNewPlayer(text);
-            waitingForName = false;
+        if(_state.equals("ENTER_NAME")){
+            handleEnterName(text);
+            return;
+        }
+        
+        if(_state.equals("READY")){
+            handleReady(text);
             return;
         }
 
@@ -187,17 +204,62 @@ class GameWindow{
         handleInput(text);
     }
 
-    private void createNewPlayer(String name){
-        if(name.equals("")){
-            name = _DEAFULT_NAME;
-        }
+    private void handleEnterName(String name){
+        if(waitingForName){
 
-        _player.newPlayer(name);
-        print("Welcome " + _player.getName() + "! and get ready for adventure!");
+
+            if(name.equals("")){
+                name = _DEAFULT_NAME;
+            }
+            Player _player = new Player(); 
+            _player.newPlayer(name);
+            print("Welcome " + _player.getName() + "! and get ready for adventure!");
+            this.setState("READY");
+            this.setScene("""
+                    You find yourself in a dimly lit dungeon, the air thick with the scent of damp stone and ancient secrets. 
+                    The walls are adorned with faded tapestries depicting long-forgotten battles, and the flickering torchlight casts eerie shadows that dance across the cold, uneven floor. 
+                    In the distance, you can hear the faint echoes of dripping water and the distant scurrying of unseen creatures. 
+                    The atmosphere is heavy with anticipation as you stand at the entrance, ready to embark on a perilous journey through the depths of this mysterious dungeon.
+                    \n"""
+                    + "Here are your stats: \n" +
+                    "Name: " + _player.getName() + "\n" +
+                    "Race: " + _player.getRace() + "\n" +
+                    "HP: " + _player.getHp() + "/" + _player.getMaxHP() + "\n" +
+                    "AC: " + _player.getAc() + "\n" +
+                    "Weapon: " + _player.getWeapon() + "\n" +
+                    "Streanth modifier: " + _player.getModifier() + "\n" +
+                    "Armor: " + _player.getArmor().getName() + "\n" +
+                    "Luck: " + _player.getLuck() + "\n" +
+                    "Gold: " + _player.getGold() + "\n");
+            print("Are you ready? y/n");
+            waitingForName = false; 
+        }
     }
 
+    private void handleReady(String answare){
+            
+            Commands cmd = Commands.fromInput(answare);
+            print("Are you ready? " + this._player.getName());
+
+            if(answare.equalsIgnoreCase("yes") || answare.equalsIgnoreCase("y") || answare.equalsIgnoreCase("Yes")){
+                cmd.enable(this, _player);
+                print(_player.getName() + "Welcom to the Dungo, good luck!");
+            }
+            else if(answare.equalsIgnoreCase("no") || answare.equalsIgnoreCase("n")){
+                cmd.enable(this, _player);
+                    print("Lets start over");
+                    this.setState("ENTER_NAME");
+                    this.setScene(_DEAFULT_SCENE);
+                    print("Please enter your name");
+                    this.setIsWaitingForPlayer(true);
+                    
+            }else{
+                print("Please answer with yes or no");
+            }
+
+        }
+    }
   
-}
     
  
 //================= COMMAND ENUM =====================
@@ -252,6 +314,21 @@ enum Commands{
             game.print("AC: " + player.getAc() + "\n");
             game.print("HP: " + player.getHp() + "/" + player.getMaxHP() + "\n");
             game.print("Dice pool: " + player.getDiceCount());
+        }
+    },
+    YES("y", "yes", "Y", "Yes"){
+        public void enable(GameWindow game, Player player){
+            if(game.getState().equals("READY")){
+                game.setState("BATTLE");
+
+            }
+        }
+    },
+    NO("n", "no", "N", "NO"){
+        public void enable(GameWindow game, Player player){
+            if(game.getState().equals("READY")){
+                game.setState("ENTER_NAME");
+            }
         }
     };
 
@@ -760,7 +837,7 @@ class Weapon{ // weapons and their abilities
      * @return String of a wepon discription
      */
     public String toString(){
-        return this.name + " " + this.diceCount + "d" + this.diceType + " " + this.bonus;
+        return this.name + " " + this.diceCount + "d" + this.diceType + "+" + this.bonus;
     }
 
 
@@ -1055,6 +1132,7 @@ class Player extends Entity{
     private int MAXAC;
     private int modifier;
     private Weapon wep;
+    private String race;
     // =========== Booleans feats ==========
     private boolean fireMage = false;
     private boolean waterMage = false;
@@ -1073,19 +1151,72 @@ class Player extends Entity{
     private Map<Feat, Integer> feats = new HashMap<>(); //track acquired feats and count
     private Map<Integer, Integer> dicepool = new HashMap<>(); // for magic type attacks
     private Map<Integer, Integer> poisonpool= new HashMap<>(); // for poison damage over time attacks
-
-
+    private List<String> racePool = new ArrayList<>();
+    private Map<String, Map<String, Integer>> raceBonus = new HashMap<>();
     private Random rand = new Random();
 
+   public Player(){
+        racePool.add("Human");
+        racePool.add("Elf");
+        racePool.add("Dwarf");
+        racePool.add("Gnome");
+
+        Map<String, Integer> humanBonus = new HashMap<>();
+        humanBonus.put("hp", 0);
+        humanBonus.put("ac", 0);
+        humanBonus.put("moidifier", 1);
+        humanBonus.put("luck", 0);
+        Map<String, Integer> elfBonus = new HashMap<>();
+        elfBonus.put("hp", -5);
+        elfBonus.put("ac", 1);
+        elfBonus.put("modifier", 0);
+        elfBonus.put("luck", 0);
+        Map<String, Integer> dwarfBonus = new HashMap<>();
+        dwarfBonus.put("hp", 5);
+        dwarfBonus.put("ac", -1);
+        dwarfBonus.put("modifier", 2);
+        dwarfBonus.put("luck", -1);
+        Map<String, Integer> gnomeBonus = new HashMap<>();
+        gnomeBonus.put("hp", -5);
+        gnomeBonus.put("ac", 0);
+        gnomeBonus.put("modifier", -1);
+        gnomeBonus.put("luck", 1);
+
+        raceBonus.put("Human", humanBonus);
+        raceBonus.put("Elf", elfBonus);
+        raceBonus.put("Dwarf", dwarfBonus);
+        raceBonus.put("Gnome", gnomeBonus);
+
+
+   }
+
+   
     /**
      * configure a new player with the user input as name
      * 
      * @param newName String user input name 
      */
     public void newPlayer(String newName){ //when starting new game init for the user
+        this.setModifier(0);
+        this.setPotionHeal(0);
+        this.setDiceCount(0);
+        this.setRecovery(0);
+        this.setAttack(0);
+
+        this.setFireMage(false);
+        this.setWaterMage(false);
+        this.setPoisonMage(false); 
+        this.setCanPoison(false);
+
+        this.bag.clear();
+        this.feats.clear();
+        this.dicepool.clear();
+        this.poisonpool.clear();
+        
         this.setName(Acolor.ORANGE.get() + newName + Acolor.RESET.get());
         this.setLvl(1);
         this.setXp(0);
+        this.setRace(racePool);
         this.MAXHP = rand.nextInt(6) + 1 + 40;
         this.setHp(this.MAXHP);
         this.setLuck(0);
@@ -1095,16 +1226,25 @@ class Player extends Entity{
         this.setAc(10 + this.arm.getAc());
         this.wep = new Weapon();
         this.item = new Item();
-        this.setGold(rand.nextInt(100 - (this.arm.getPrice()) + this.wep.getPrice()) + 26);    
+        wep.update(rand.nextInt(6) + 1, this);
+        int goldBound = 100 - (this.arm.getPrice()) + this.wep.getPrice(); //for edge case of 0 or below
+        this.setGold(rand.nextInt(goldBound) + this.wep.getPrice() + 26);    
         item.makePotion();
         this.bag.put(this.item.getName(), bag.getOrDefault(this.item.getName(), 0) + 1);
-        wep.update(rand.nextInt(6) + 1, this);
         this.attack = dmg();
         if(newName.equals("GOD")){
             Cheats.GOD.active(this);
             Cheats.GOD.display();
             this.setHp(this.MAXHP);
-        }
+            }
+        raceBonus.containsKey(this.getRace());
+            Map<String, Integer> bonuses = raceBonus.get(this.getRace());
+            this.setMaxHP(this.getMaxHP() + bonuses.getOrDefault("hp", 0));
+            this.setHp(this.getMaxHP());
+            this.setAc(this.getAc() + bonuses.getOrDefault("ac", 0));
+            this.setModifier(this.getModifier() + bonuses.getOrDefault("modifier", 0));
+            this.setLuck(this.getLuck() + bonuses.getOrDefault("luck", 0));
+        
     }
 
     // ===== GETTERS =====
@@ -1171,6 +1311,10 @@ class Player extends Entity{
     public Map<Feat, Integer> getFeats(){
         return this.feats;
     }
+
+    public String getRace(){
+        return this.race;
+    }
     
     // ===== SETTERS =====
     public void setMaxHP(int maxhp){
@@ -1227,6 +1371,10 @@ class Player extends Entity{
     
     public void setArmor(Armor arm){
         this.arm = arm;
+    }
+
+    public void setRace(List<String> racePool){
+        this.race = racePool.get(rand.nextInt(racePool.size()));
     }
 
     /**
@@ -2071,7 +2219,6 @@ public class Fight{
         boolean finalBossSpawned = false;
         SwingUtilities.invokeLater(() ->{
            GameWindow game =  new GameWindow("Game", true);
-            game.print("ENTER_NAME");
 
         });
         
