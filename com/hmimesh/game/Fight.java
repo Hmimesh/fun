@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.ArrayList;
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.text.DefaultCaret;
+
 import java.awt.*;
 import java.util.function.Consumer;
 
@@ -63,6 +65,8 @@ class GameEngine{
     private boolean hardFightState = false;
     private boolean shopState = false;
     private boolean recoverState = false;
+
+    private Timer _timer;
 
   
     //================== CONSTRUCTOR ==================
@@ -140,7 +144,7 @@ class GameEngine{
      * @param player current playing player
      * @param enemy current enemy
      */
-    public static void processPoison(Player player, Enemy enemy){
+    public static void processPoison(Player player, Enemy enemy, GameWindow game){
         
         if(!enemy.isPoisoned()){
             return;
@@ -149,10 +153,10 @@ class GameEngine{
         int hit = player.poisondmg();
         enemy.setHp(enemy.getHp() - hit);
         enemy.setPoisonCount(enemy.getPoisonCount() - 1);
-        System.out.println(enemy.getName() + Acolor.BGREEN.get() + " Is poisoned! and was hit by: " + hit + Acolor.RESET.get() + " hp is : " + enemy.getHp());
+        game.print(enemy.getName() + " Is poisoned! and was hit by: " + hit + " hp is : " + enemy.getHp());
         if(enemy.getPoisonCount() <= 0){
             enemy.setPoisoned(false);
-            System.out.println(enemy.getName() + Acolor.BGREEN.get() + " Is not poisoned anymore!" + Acolor.RESET.get());
+            game.print(enemy.getName() +  " Is not poisoned anymore!");
         }
     }
         
@@ -162,13 +166,13 @@ class GameEngine{
      * @param player current playing player 
      * @param enemy current enemy the player is facing
      */
-    public static void tryApplyPoison(Player player, Enemy enemy){
+    public static void tryApplyPoison(Player player, Enemy enemy, GameWindow game){
         Random rand = new Random();
         int d100 = rand.nextInt(100) + 1;
         if((player.canCastPoison() == true && (d100 + player.getLuck()) > 80)){
             enemy.setPoisoned(true);
             enemy.setPoisonCount(3); //last 3 ticks
-            System.out.println(enemy.getName() + Acolor.BGREEN.get() + " Is poisoned!" + Acolor.RESET.get());
+            game.print(enemy.getName() + " Is poisoned!");
         }
     }
 
@@ -188,12 +192,13 @@ class GameEngine{
         int minCrit = 20;
         int crit = Math.min(20 - (att.getLuck() / 10), minCrit); // crit must be 20 unless its lowered byt luck, the higher the luck the higher the crit chance
         GameWindow game = this._game;
+        game.print(att.getName() + " rolled a " + roll + " against " + def.getName() + " ac of " + def.getAc() + " with a hit bonus of " + att.hitBonus());
         if (((roll + att.hitBonus()) >= def.getAc() && def.getHp() > 0 && roll != 1) || roll >= (crit)){
             if(roll >= crit){
                  //Critical double damgae
                 int dmg = att.dmg() * 2;
                 def.setHp(def.getHp() - dmg);
-                game.print("Critical!!! " + att.getName() + " hit: " + def.getName() + " for: " + dmg + " " + def.getName() + " hp is:" + def.getHp() + " points!");
+                game.print(crit + " Critical!!! " + att.getName() + " hit: " + def.getName() + " for: " + dmg + " " + def.getName() + " hp is:" + def.getHp() + " points!");
             }else{
                 int hit = att.dmg();
                 def.setHp(def.getHp() - hit);
@@ -203,14 +208,14 @@ class GameEngine{
             if(att instanceof Player && def instanceof Enemy){ //poison machanics!
                 Player p = (Player)att;
                 Enemy e = (Enemy)def;
-                tryApplyPoison(p, e);
+                tryApplyPoison(p, e, game);
             }
         }
         else if(roll == 1){ //1 is a critical miss no matter what
-            System.out.println("CRITICAL MISS FOR " + att.getName());
+            game.print("1 IS A CRITICAL MISS FOR " + att.getName());
         }
         else{
-            System.out.println(att.getName() + " missed.");
+            game.print(att.getName() + " missed " + def.getName() + "!");
         }
         return def.getHp();
     }
@@ -237,69 +242,77 @@ class GameEngine{
     }
 
     public void fightloop(){
-        int count = 0;
-       
-        Random rand = new Random(); // for rolls and checks
-        if(this._game.getState().equals("EASY_FIGHT")){
-            this._enemy = new Enemy();
-            this._enemy.lvlBased(this._player.getLvl(), false);
-        }else if(this._game.getState().equals("HARD_FIGHT")){
-            this._enemy = new Enemy();
-            this._enemy.lvlBased(this._player.getLvl(), true);
-        }
-       this._game.print("As you enter the room you see a " + _enemy.getName() + " lvl: " + _enemy.getLvl() + " with " + _enemy.getHp() + " hp and " + _enemy.getAc() + " ac!");
-        this._game.print("Get ready to fight!");
- 
-            
-        while(this._player.getHp() > 0 && _enemy.getHp() > 0){
-            int roll = rand.nextInt(20) + 1; // d20 roll for attack    
-            int enemyRoll = rand.nextInt(20) + 1; // d20 roll for enemy attack
-            count += 1;
-            this._game.print("================== ROUND " + count + " ==================");
-            
-            //decide who starts first based on lvl and luck
-            if(this._player.getLvl() + this._player.getLuck() >= _enemy.getLvl() + _enemy.getLuck()){
-                attack(roll, this._player, this._enemy);
-                if(_enemy.getHp() > 0){
-                    attack(enemyRoll, this._enemy, this._player);
-                }
-            }else{
-                attack(enemyRoll, this._enemy, this._player);
-                if(this._player.getHp() > 0){
-                    attack(roll, this._player, this._enemy);
-                }
-            }
-            processPoison(this._player, this._enemy);
-            
-            // healing stage if there is any potions
-            if(this._player.autoHealInFight()){
-                String used = this._player.useBestPotion();
-                this._game.print("You used " + used + " to heal yourself! your hp is now: " + this._player.getHp());
-            }else{
-                this._game.print("You are low on health and have no potions to heal yourself!");
-            }
+        SwingWorker<Void, Void> worker = new SwingWorker<>(){
+            @Override
+            protected Void doInBackground() throws Exception {
+                int count = 0;
+                Random rand = new Random();
 
-            _game.print("=================== End of round " + count + " ===================");
-            wait(1500); // wait 1.5 seconds between rounds
+                if(_game.getState().equals("EASY_FIGHT")){
+                    _enemy = new Enemy();
+                    _enemy.lvlBased(_player.getLvl(), false);
+                } else if(_game.getState().equals("HARD_FIGHT")){
+                    _enemy = new Enemy();
+                    _enemy.lvlBased(_player.getLvl(), true);
+                }
 
-            
-            if(this._player.getHp() <= 0){
-                _game.print("You have been defeated by " + _enemy.getName() + " better luck next time!");
-                this._game.setState("GAME_OVER");
-                break;
+                _game.print("As you enter the room you see a " + _enemy.getName() + " lvl: " + _enemy.getLvl() + " with " + _enemy.getHp() + " hp and " + _enemy.getAc() + " ac!");
+                _game.print("Get ready to fight!");
+
+                while(_player.getHp() > 0 && _enemy.getHp() > 0){
+                    int roll = rand.nextInt(20) + 1;
+                    int enemyRoll = rand.nextInt(20) + 1;
+                    count += 1;
+                    Thread.sleep(1500);
+                    _game.print("================== ROUND " + count + " ==================");
+
+                    // decide who goes first based on lvl and luck
+                    if(_player.getLvl() + _player.getLuck() >= _enemy.getLvl() + _enemy.getLuck()){
+                        attack(roll, _player, _enemy);
+                        if(_enemy.getHp() > 0){
+                            attack(enemyRoll, _enemy, _player);
+                        }
+                    } else {
+                        attack(enemyRoll, _enemy, _player);
+                        if(_player.getHp() > 0){
+                            attack(roll, _player, _enemy);
+                        }
+                    }
+
+                    processPoison(_player, _enemy, _game);
+
+                    // healing stage
+                    if(_player.autoHealInFight()){
+                        String used = _player.useBestPotion();
+                        _game.print("You used " + used + " to heal yourself! HP is now: " + _player.getHp());
+                    } else {
+                        _game.print("You are low on health and have no potions!");
+                    }
+
+                    _game.print("=================== End of round " + count + " ===================");
+                    Thread.sleep(1500);
+
+                    if(_player.getHp() <= 0){
+                        _game.print("You have been defeated by " + _enemy.getName() + " — better luck next time!");
+                        _game.setState("GAME_OVER");
+                        break;
+                    } else if(_enemy.getHp() <= 0){
+                        _game.print("You have defeated " + _enemy.getName() + " — congratulations!");
+                        _player.setXp(_player.getXp() + _enemy.getXp());
+                        _player.setGold(_player.getGold() + _enemy.getGold());
+                        _player.checkLvlUp();
+                        _game.setState("REWARD");
+                        break;
+                    } else {
+                        _game.print("The fight continues...");
+                    }
+                }
+                return null;
             }
-            else if(_enemy.getHp() <= 0){
-                _game.print("You have defeated " + _enemy.getName() + " congratulations!");
-                this._player.setXp(this._player.getXp() + _enemy.getXp());
-                this._player.setGold(this._player.getGold() + _enemy.getGold());
-                this._player.checkLvlUp();
-                this._game.setState("REWARD");
-                break;
-            }else{
-                _game.print("The fight continues...");
-            }
-            }   
+        };
+        worker.execute();
     }
+
 }
     
 
@@ -362,23 +375,27 @@ class GameWindow{
         _logScroll = new JScrollPane(_logArea);
         _sceneScroll = new JScrollPane(_sceneArea);
         _bottomPanel = new JPanel(new BorderLayout());
+        DefaultCaret caret = (DefaultCaret) _logArea.getCaret();
+        caret.setUpdatePolicy(DefaultCaret.ALWAYS_UPDATE);
 
         // scene style no edits
         _sceneArea.setEditable(false);
-        _sceneArea.setFont(new Font("Monospaced", Font.PLAIN, 14)); //ASCII font
+        _sceneArea.setFont(new Font("Monospaced", Font.PLAIN, 21)); //ASCII font
         
         // log style no edits  
         _logArea.setEditable(false);
+        _logArea.setFont(new Font("Monospaced", Font.PLAIN, 16)); //ASCII font
         _logArea.setLineWrap(true);
         _logArea.setWrapStyleWord(true);
-
+        // input style
+        _inputField.setFont(new Font("Monospaced", Font.PLAIN, 16));
         _splitPane = new JSplitPane(
             JSplitPane.VERTICAL_SPLIT,
             _sceneScroll,
             _logScroll
         );
 
-        _splitPane.setDividerLocation(400); //more for the scene that is on top less for the logger
+        _splitPane.setDividerLocation(850); //more for the scene that is on top less for the logger
 
         _bottomPanel.setLayout(new BorderLayout());
         _bottomPanel.add(_inputField, BorderLayout.CENTER);
@@ -402,7 +419,7 @@ class GameWindow{
         _inputField.setForeground(java.awt.Color.WHITE);
 
         //set window
-        _frame.setSize(1600, 800);
+        _frame.setSize(1980, 1200);
         _frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         _frame.setVisible(visible);
 
