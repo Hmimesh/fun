@@ -1,0 +1,29 @@
+i dont longer have my refrence matiral wich is fine but but but, i do need remebering instead of while loop we are doing state changings which is ok
+
+lets start with the battle method the idea is
+
+the player after saying they are ready
+they should face with 2 option 
+ine door is easy and one is hard
+if they choose whom ever they choose to go through there will be an enemy
+
+now i understand i need another class / enum and state  i dont know to refactor player choise in which of the battles to fight
+
+if easy _State should be EASY fight and let the fight create enemy there that should be same lvl or lower
+
+and hard should be the opposite
+
+and in the game engine it should get the user input and do accordingly we dont want two fights to be running in the same time in the long run it could lead to a stack overflow
+
+then instead of what we have now to decide wich is luck based we will do rewarding step this this should be the next step
+
+then create the scenes for both
+
+maby also make a scene enum (god i love enums) or class make it into a map or something so each scene will be diffrent for each enemy type and strong or weak or diffrent enemy but with diffrent name 
+ie strong goblin being three goblins in a trench coat etc etc
+
+making it be more of the enemy data and making the name from enemy pool like map and choose in random in there
+
+so the scene will take the name from that map and use it as well to create the scene the player will look
+
+and also i need to create a refresh rate for the  scene to actually update better rather then just change styles, making it more smooth and if the enemy have hp there and player have hp there let it change accordingly each delta frame

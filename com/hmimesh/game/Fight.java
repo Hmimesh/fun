@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.ArrayList;
 import javax.swing.*;
 import javax.swing.border.Border;
-
 import java.awt.*;
+import java.util.function.Consumer;
 
 
 /** In this program we are doing a random to check who will win in a psudo very simplified dnd style combat
@@ -16,15 +16,299 @@ import java.awt.*;
  * notice this is an onging and educational program from things i learn an implement
  * if you want to use it do with it something else you are welcome to!
  * 
+ * 
+ * 
+ * 
  * check me out in github - Hmimesh
  * 
  * @author Ben Farjun
- * @version 01/04/2026
+ * @version 02/04/2026
 */ 
 
+//TO DO:
+// - Add diffrent scenes for the enemies
+// - make a map for enemies name based on data ie slime = "Slime", wolf = "Wolf" etc... and use it to generate the name of the enemy based on its type and lvl
+// - make sure each time a player is about to level above level three their last fight will be a boss
+// - Add titles enums that player get by achiving combination of diffrent type of feats
+// - understand how to add diffrent type of colors to the swing 
+// - Move the core game logic from terminal to gui and move the curren main to a diffrent file.
+// - Add more commands
+// - learn Ascii art and add it to the game or let ai do it for me cause holy shit coding is one thing doing ascii art now is a whole diffrent level and with java level of asking its tough
+/* */
+//================== GAME ENGINE CLASS ===============
+/**
+ * GameEngine class for the main game logic and the main loop of the game, it has the player and enemy classes as well as the shop class and the game window class, it also has methods for attacking and processing poison and other mechanics of the game
+ */
+class GameEngine{
+    private Player _player;
+    private Enemy _enemy;
+    private Shop _shop;
+    private boolean gameWpm = false;
+    private GameWindow _game;
+    private boolean finalBossSpawned = false;
+    private String DEAFULT_GAME_NAME = "Dungo";
+
+    //diffrent types of counts 
+    private int _fightCount = 0;
+    private int _slimeCount = 0;
+    private int _wolfCount = 0;
+    private int _goblinCount = 0;
+    private int _dragonCount = 0;
+    private int _ratCount = 0;
+
+
+    //diffrent states of the game
+    private boolean chooseDoorState = false;
+    private boolean easyFightState = false;
+    private boolean hardFightState = false;
+    private boolean shopState = false;
+    private boolean recoverState = false;
+
+  
+    //================== CONSTRUCTOR ==================
+
+    public GameEngine(){
+        _game = new GameWindow(DEAFULT_GAME_NAME, true, name -> {
+            // ENTER_NAME callback — build the player, then hand off to READY
+            this._player = new Player();
+            this._player.newPlayer(name);
+            _game.setPlayer(this._player);
+
+            _game.setState("READY");
+            _game.setScene("""
+                    You find yourself in a dimly lit dungeon, the air thick with the scent of damp stone and ancient secrets.
+                    The walls are adorned with faded tapestries depicting long-forgotten battles, and the flickering torchlight casts eerie shadows.
+                    In the distance you hear dripping water and the distant scurrying of unseen creatures.
+                    \n"""
+                    + "Name: "     + this._player.getName()            + "\n"
+                    + "Race: "     + this._player.getRace()            + "\n"
+                    + "HP:   "     + this._player.getHp() + "/" + this._player.getMaxHP() + "\n"
+                    + "AC:   "     + this._player.getAc()              + "\n"
+                    + "Weapon: "   + this._player.getWeapon()          + "\n"
+                    + "Armor: "    + this._player.getArmor().getName() + "\n"
+                    + "Mod: "      + this._player.getModifier()        + "\n"
+                    + "Luck: "     + this._player.getLuck()            + "\n"
+                    + "Gold: "     + this._player.getGold()            + "\n\n"
+                    + "Are you ready to start your adventure? (y/n)");
+            _game.print("Welcome " + this._player.getName() + "! Are you ready? (y/n)");
+        });
+
+        // READY callback — yes goes to doors, no restarts name entry
+        _game.setOnReady(answer -> {
+            if(answer.equalsIgnoreCase("yes") || answer.equalsIgnoreCase("y")){
+                _game.setState("DOOR_CHOOSE");
+                _game.print(this._player.getName() + " — welcome to the Dungeon! Good luck!");
+                doorChooser();
+            } else if(answer.equalsIgnoreCase("no") || answer.equalsIgnoreCase("n")){
+                _game.setState("ENTER_NAME");
+                _game.setScene(_game.getDefaultScene());
+                _game.print("Let's start over. Please enter your name:");
+                _game.setIsWaitingForPlayer(true);
+            } else {
+                _game.print("Please answer with yes or no");
+            }
+        });
+
+        // DOOR_CHOOSE callback — pick a door, GameEngine spawns the enemy and starts the fight
+        _game.setOnDoorChoose(answer -> {
+            if(answer.equalsIgnoreCase("1") || answer.equalsIgnoreCase("left") || answer.equalsIgnoreCase("l")){
+                _game.setState("EASY_FIGHT");
+                fightloop();
+            } else if(answer.equalsIgnoreCase("2") || answer.equalsIgnoreCase("right") || answer.equalsIgnoreCase("r")){
+                _game.setState("HARD_FIGHT");
+                fightloop();
+            } else {
+                _game.print("Please answer with 1 - left or 2 - right");
+            }
+        });
+
+        // Kick off game flow — GameEngine is the sole authority on initial state
+        _game.setScene(_game.getDefaultScene());
+        _game.setState("ENTER_NAME");
+        _game.print("Please enter your name");
+        _game.setIsWaitingForPlayer(true);
+    }
+
+
+    //=============== POISON METHODS ================== 
+    
+     /**
+     * check if the enemy is poisoned if yes apply the current player poison damage
+     * to the enemy health, also check the enemy poison count and lowers it
+     * 
+     * 
+     * @param player current playing player
+     * @param enemy current enemy
+     */
+    public static void processPoison(Player player, Enemy enemy){
+        
+        if(!enemy.isPoisoned()){
+            return;
+        }
+
+        int hit = player.poisondmg();
+        enemy.setHp(enemy.getHp() - hit);
+        enemy.setPoisonCount(enemy.getPoisonCount() - 1);
+        System.out.println(enemy.getName() + Acolor.BGREEN.get() + " Is poisoned! and was hit by: " + hit + Acolor.RESET.get() + " hp is : " + enemy.getHp());
+        if(enemy.getPoisonCount() <= 0){
+            enemy.setPoisoned(false);
+            System.out.println(enemy.getName() + Acolor.BGREEN.get() + " Is not poisoned anymore!" + Acolor.RESET.get());
+        }
+    }
+        
+    /**
+     * a method for the player if they can apply poison to try and apply the poison to the enemy
+     * 
+     * @param player current playing player 
+     * @param enemy current enemy the player is facing
+     */
+    public static void tryApplyPoison(Player player, Enemy enemy){
+        Random rand = new Random();
+        int d100 = rand.nextInt(100) + 1;
+        if((player.canCastPoison() == true && (d100 + player.getLuck()) > 80)){
+            enemy.setPoisoned(true);
+            enemy.setPoisonCount(3); //last 3 ticks
+            System.out.println(enemy.getName() + Acolor.BGREEN.get() + " Is poisoned!" + Acolor.RESET.get());
+        }
+    }
+
+    //======== METHOD FOR ATTACKING ============
+
+    /**
+     * the main attacking method using rolls of chance of d20 using 2 entities
+     * using rolls and bonuses against ac if it pass lower the defender hp according to the attack
+     * also have a crit succsus and fail if roll is 1 or 20 
+     * 
+     * @param roll int value of the roll 
+     * @param att Entity the one who attacks
+     * @param def Entity the one who defends
+     * @return the entetity health
+     */
+    public int attack(int roll, Entity att, Entity def){ // takes in the "dice" roll, attacker attack, attacked ac, attacked hp, name of the attacker, name of the attacked and returning new attacked hp
+        int minCrit = 20;
+        int crit = Math.min(20 - (att.getLuck() / 10), minCrit); // crit must be 20 unless its lowered byt luck, the higher the luck the higher the crit chance
+        GameWindow game = this._game;
+        if (((roll + att.hitBonus()) >= def.getAc() && def.getHp() > 0 && roll != 1) || roll >= (crit)){
+            if(roll >= crit){
+                 //Critical double damgae
+                int dmg = att.dmg() * 2;
+                def.setHp(def.getHp() - dmg);
+                game.print("Critical!!! " + att.getName() + " hit: " + def.getName() + " for: " + dmg + " " + def.getName() + " hp is:" + def.getHp() + " points!");
+            }else{
+                int hit = att.dmg();
+                def.setHp(def.getHp() - hit);
+                game.print(att.getName() + " hit " + def.getName() + " for: " + hit + " " + def.getName() + " hp is: " + def.getHp() + " points!");
+
+            }
+            if(att instanceof Player && def instanceof Enemy){ //poison machanics!
+                Player p = (Player)att;
+                Enemy e = (Enemy)def;
+                tryApplyPoison(p, e);
+            }
+        }
+        else if(roll == 1){ //1 is a critical miss no matter what
+            System.out.println("CRITICAL MISS FOR " + att.getName());
+        }
+        else{
+            System.out.println(att.getName() + " missed.");
+        }
+        return def.getHp();
+    }
+
+        // ============= Time Wait Method ===========
+    /**
+     * a wait time wrapper using thread sleep to slow the game 
+     * and make a little bit of wait
+     * 
+     * @param time int for how much time to wait (1000 = 1 second)
+     */
+    public static void wait(int time){
+        try{
+            Thread.sleep(time);
+        }catch(InterruptedException a){
+            System.out.println("Thread was interupted");
+        }
+    }
+    // =============== Main Loop =================
+
+    public void doorChooser(){
+        _game.print("Infront of you are two doors, one on the left and one on the right, one is an easy battle one is a harder battle. \n");
+        _game.print("Which door do you choose?  1 - left (easy) / 2 - right (hard). \n");
+    }
+
+    public void fightloop(){
+        int count = 0;
+       
+        Random rand = new Random(); // for rolls and checks
+        if(this._game.getState().equals("EASY_FIGHT")){
+            this._enemy = new Enemy();
+            this._enemy.lvlBased(this._player.getLvl(), false);
+        }else if(this._game.getState().equals("HARD_FIGHT")){
+            this._enemy = new Enemy();
+            this._enemy.lvlBased(this._player.getLvl(), true);
+        }
+       this._game.print("As you enter the room you see a " + _enemy.getName() + " lvl: " + _enemy.getLvl() + " with " + _enemy.getHp() + " hp and " + _enemy.getAc() + " ac!");
+        this._game.print("Get ready to fight!");
+ 
+            
+        while(this._player.getHp() > 0 && _enemy.getHp() > 0){
+            int roll = rand.nextInt(20) + 1; // d20 roll for attack    
+            int enemyRoll = rand.nextInt(20) + 1; // d20 roll for enemy attack
+            count += 1;
+            this._game.print("================== ROUND " + count + " ==================");
+            
+            //decide who starts first based on lvl and luck
+            if(this._player.getLvl() + this._player.getLuck() >= _enemy.getLvl() + _enemy.getLuck()){
+                attack(roll, this._player, this._enemy);
+                if(_enemy.getHp() > 0){
+                    attack(enemyRoll, this._enemy, this._player);
+                }
+            }else{
+                attack(enemyRoll, this._enemy, this._player);
+                if(this._player.getHp() > 0){
+                    attack(roll, this._player, this._enemy);
+                }
+            }
+            processPoison(this._player, this._enemy);
+            
+            // healing stage if there is any potions
+            if(this._player.autoHealInFight()){
+                String used = this._player.useBestPotion();
+                this._game.print("You used " + used + " to heal yourself! your hp is now: " + this._player.getHp());
+            }else{
+                this._game.print("You are low on health and have no potions to heal yourself!");
+            }
+
+            _game.print("=================== End of round " + count + " ===================");
+            wait(1500); // wait 1.5 seconds between rounds
+
+            
+            if(this._player.getHp() <= 0){
+                _game.print("You have been defeated by " + _enemy.getName() + " better luck next time!");
+                this._game.setState("GAME_OVER");
+                break;
+            }
+            else if(_enemy.getHp() <= 0){
+                _game.print("You have defeated " + _enemy.getName() + " congratulations!");
+                this._player.setXp(this._player.getXp() + _enemy.getXp());
+                this._player.setGold(this._player.getGold() + _enemy.getGold());
+                this._player.checkLvlUp();
+                this._game.setState("REWARD");
+                break;
+            }else{
+                _game.print("The fight continues...");
+            }
+            }   
+    }
+}
+    
 
 
 //================== WINDOW CLASS ===================
+
+/**
+ * GameWindow class for the game window and all the interactions with it, it has a logger and a scene area and an input field
+ */
 class GameWindow{
     private boolean _visible;
     private String _name;
@@ -37,8 +321,7 @@ class GameWindow{
     private JScrollPane _sceneScroll;
     private JPanel _bottomPanel; 
     private JButton _sendButton;
-    private Player _player;
-    private boolean waitingForName = true;
+    private boolean waitingForName = false;
     private String _DEAFULT_NAME = "hero";
     private String _DEAFULT_SCENE = """
                 [_________ \\    ||        ||   ||       ||   _=_=_=_=       =========
@@ -53,8 +336,20 @@ class GameWindow{
                 """;
     private String _state;
     private String _scene;
+    private Player _player;
+    private Consumer<String> _onNameEntered;
+    private Consumer<String> _onReady;
+    private Consumer<String> _onDoorChoose;
 
-    public  GameWindow(String windowname, boolean visible){
+
+    /**
+     * Constructor for the game window it sets up all the needed components and the layour for the game
+     * Constructing the GUI
+     * 
+     * @param windowname the of the window as well as the game
+     * @param visible a parameter to set the window visible or not
+     */
+    public  GameWindow(String windowname, boolean visible, Consumer<String> onNameEntered){
         this._name = windowname;
         this._visible = visible;
         
@@ -67,7 +362,6 @@ class GameWindow{
         _logScroll = new JScrollPane(_logArea);
         _sceneScroll = new JScrollPane(_sceneArea);
         _bottomPanel = new JPanel(new BorderLayout());
-        _player = new Player ();
 
         // scene style no edits
         _sceneArea.setEditable(false);
@@ -93,23 +387,6 @@ class GameWindow{
         _frame.setLayout(new BorderLayout());
         _frame.add(_bottomPanel, BorderLayout.SOUTH);
         _frame.add(_splitPane, BorderLayout.CENTER);
-        _frame.add(_bottomPanel, BorderLayout.SOUTH);
-
-        _state = "ENTER_NAME";
-        print("Welcom to the game!");
-        print("Please enter your name");
-        drawScene("""
-                [_________ \\    ||        ||   ||       ||   _=_=_=_=       =========
-                ||        ||    ||        ||   ||\\\\     ||   ||           |/         \\|
-                ||        ||    ||        ||   || \\\\    ||   ||   |___    ||         ||
-                ||        ||    ||        ||   ||  \\\\   ||   ||   |===\\\\  ||         ||  
-                ||        ||    ||        ||   ||   \\\\  //   ||       ||  |\\         /|
-                ||_______/_/    |_\\_______||   ||    \\\\//    ||\\______||   \\\\_______//
-                
-                 GOOD LUCK       HAVE FUN       A GAME MADE BY BEN FARJUN   @HMIMESH
-                
-                """);
-
 
         _sendButton.addActionListener(e -> submitInput());
         _inputField.addActionListener(e -> submitInput());
@@ -125,10 +402,14 @@ class GameWindow{
         _inputField.setForeground(java.awt.Color.WHITE);
 
         //set window
-        _frame.setSize(600, 500);
+        _frame.setSize(1600, 800);
         _frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         _frame.setVisible(visible);
+
+        this._onNameEntered = onNameEntered;
     }
+
+    //=========== METHODS ===========
 
     public void print(String text){
         _logArea.append(text + "\n");
@@ -147,6 +428,9 @@ class GameWindow{
     }
     public String getState(){
         return _state;
+    }
+    public String getDefaultScene(){
+        return _DEAFULT_SCENE;
     }
     //============= SETTERS ============
     public void setName(String name){
@@ -167,103 +451,90 @@ class GameWindow{
         this._scene = scene;
         drawScene(scene);
     }
+    
+    public String setText(String text){
+        _inputField.setText(text);
+        return text;
+    }
+
+    //============= SETTERS AND GETTERS END ===========
+
+
     public void setIsWaitingForPlayer(boolean waiting){
         this.waitingForName = waiting;
     }
 
-    private void handleInput(String text){
+    public void setPlayer(Player player){
+        this._player = player;
+    }
 
-        if(_state.equals("ENTER_NAME")){
+    public void setOnReady(Consumer<String> onReady){
+        this._onReady = onReady;
+    }
+
+    public void setOnDoorChoose(Consumer<String> onDoorChoose){
+        this._onDoorChoose = onDoorChoose;
+    }
+
+
+    //============= INPUT HANDLING AND EVENT HANDLING===========
+    /**
+     * handleInput take a string and handles it based on the current state of the game
+     * using the text the user input through the gui
+     * 
+     * @param text - user input
+     */
+    private void handleInput(String text){
+        if(_state.equals("ENTER_NAME") && _onNameEntered != null){
             handleEnterName(text);
             return;
         }
-        
-        if(_state.equals("READY")){
-            handleReady(text);
+        if(_state.equals("READY") && _onReady != null){
+            _onReady.accept(text);
             return;
         }
-
+        if(_state.equals("DOOR_CHOOSE") && _onDoorChoose != null){
+            _onDoorChoose.accept(text);
+            return;
+        }
         Commands cmd = Commands.fromInput(text);
-
         if(cmd != null && _player != null){
             cmd.enable(this, _player);
             return;
         }
-
-        print("Unknow command, type help");
+        print("Unknown command, type help");
     }
 
+    /**
+     * submitInput is a method that let the user sumbit what they wrote
+     * abd adding '>' in the logger.
+     *
+     */
     private void submitInput(){
         String text = _inputField.getText().trim();
         if(text.equals("")){
             return;
         }
-
         print("> " + text);
         _inputField.setText("");
         handleInput(text);
     }
 
+    // Just fires the callback — GameEngine handles all the logic
     private void handleEnterName(String name){
-        if(waitingForName){
-
-
-            if(name.equals("")){
-                name = _DEAFULT_NAME;
-            }
-            Player _player = new Player(); 
-            _player.newPlayer(name);
-            print("Welcome " + _player.getName() + "! and get ready for adventure!");
-            this.setState("READY");
-            this.setScene("""
-                    You find yourself in a dimly lit dungeon, the air thick with the scent of damp stone and ancient secrets. 
-                    The walls are adorned with faded tapestries depicting long-forgotten battles, and the flickering torchlight casts eerie shadows that dance across the cold, uneven floor. 
-                    In the distance, you can hear the faint echoes of dripping water and the distant scurrying of unseen creatures. 
-                    The atmosphere is heavy with anticipation as you stand at the entrance, ready to embark on a perilous journey through the depths of this mysterious dungeon.
-                    \n"""
-                    + "Here are your stats: \n" +
-                    "Name: " + _player.getName() + "\n" +
-                    "Race: " + _player.getRace() + "\n" +
-                    "HP: " + _player.getHp() + "/" + _player.getMaxHP() + "\n" +
-                    "AC: " + _player.getAc() + "\n" +
-                    "Weapon: " + _player.getWeapon() + "\n" +
-                    "Streanth modifier: " + _player.getModifier() + "\n" +
-                    "Armor: " + _player.getArmor().getName() + "\n" +
-                    "Luck: " + _player.getLuck() + "\n" +
-                    "Gold: " + _player.getGold() + "\n");
-            print("Are you ready? y/n");
-            waitingForName = false; 
-        }
+        if(!waitingForName) return;
+        if(name.equals("")) name = _DEAFULT_NAME;
+        waitingForName = false;
+        _onNameEntered.accept(name);
     }
 
-    private void handleReady(String answare){
-            
-            Commands cmd = Commands.fromInput(answare);
-            print("Are you ready? " + this._player.getName());
-
-            if(answare.equalsIgnoreCase("yes") || answare.equalsIgnoreCase("y") || answare.equalsIgnoreCase("Yes")){
-                cmd.enable(this, _player);
-                print(_player.getName() + "Welcom to the Dungo, good luck!");
-            }
-            else if(answare.equalsIgnoreCase("no") || answare.equalsIgnoreCase("n")){
-                cmd.enable(this, _player);
-                    print("Lets start over");
-                    this.setState("ENTER_NAME");
-                    this.setScene(_DEAFULT_SCENE);
-                    print("Please enter your name");
-                    this.setIsWaitingForPlayer(true);
-                    
-            }else{
-                print("Please answer with yes or no");
-            }
-
-        }
-    }
-  
-    
+}
  
 //================= COMMAND ENUM =====================
 
+/**
+ * enum for commands that the user can use in the game, each command has a method to enable it and do its function, the commands are for example: help, feats, inventory, stats, yes, no
+ */
 enum Commands{
     HELP("help", "HELP", "h", "Help"){
         public void enable(GameWindow game, Player player) {
@@ -319,7 +590,7 @@ enum Commands{
     YES("y", "yes", "Y", "Yes"){
         public void enable(GameWindow game, Player player){
             if(game.getState().equals("READY")){
-                game.setState("BATTLE");
+                game.setState("DOOR_CHOOSE");
 
             }
         }
@@ -330,7 +601,27 @@ enum Commands{
                 game.setState("ENTER_NAME");
             }
         }
+    },
+    LEFT("left", "l", "Left", "1"){
+        public void enable(GameWindow game, Player player){
+            if(game.getState().equals("READY")){
+                game.setState("EASY_FIGHT");
+            }
+        }
+    },
+    RIGHT("right", "r", "Right", "2"){
+        public void enable(GameWindow game, Player player){
+            if(game.getState().equals("READY")){
+                game.setState("HARD_FIGHT");
+            }
+        }
+    },
+    EXIT("exit", "quit", "e", "Exit"){
+        public void enable(GameWindow game, Player player){
+            System.exit(0);
+        }
     };
+    
 
     String name1;
     String name2;
@@ -349,6 +640,13 @@ enum Commands{
         nameTotal.add(name4);
     }
 
+
+    /**
+     * matches method to check if what the user has input equals to any of the name of the command.
+     *
+     * @param input the user input to check if it matches any of the command names
+     * @return a boolean if any name matches return true else return false
+     */
     public boolean matches(String input){
         return input.equalsIgnoreCase(name1)
         || input.equalsIgnoreCase(name2)
@@ -356,6 +654,13 @@ enum Commands{
         || input.equalsIgnoreCase(name4);
     }
 
+
+    /**
+     * fromInput method take the user input and check if it matches any of the command names and return the command if it matches else return null
+     * 
+     * @param input user input to check if it matches any of the command names
+     * @return the command if it matches any of the command names else return null
+     */
     public static Commands fromInput(String input){
         for(Commands cmd : Commands.values()){
             if(cmd.matches(input)){
@@ -365,6 +670,11 @@ enum Commands{
         return null;
     }
 
+    /**
+     * enable method to enable the command and do its function based on the command and the game state
+     * @param game the game window in wich the command will be in
+     * @param player the player class of the current player the commands are working upon
+     */
     public abstract void enable(GameWindow game, Player player);
 
 
@@ -588,14 +898,14 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
      * @param lvl the player level
      */
 
-    public void lvlBased(int lvl){ //lvl is user lvl
+    public void lvlBased(int lvl, boolean strong){ //lvl is user lvl
         
         int strongOrWeak = rand.nextInt(10) + 1;
         int lucky = rand.nextInt(100) + 1;
 
         this.setHp(rand.nextInt(lvl * 20 - lvl * 5 + 1) + lvl * 5);
     
-        if (strongOrWeak <= 5){
+        if (strong){
             this.setLvl(rand.nextInt(4) + lvl) ;
         }else{
             int minLvl = 1;
@@ -606,9 +916,9 @@ class Enemy extends Entity{ //the enemy class should be with hp for hit points, 
             }
         }
 
-        if (lucky >= 97){
-            this.setLuck(1);
-            this.setName(this.getName() + Acolor.GREEN.get() + " Lucky" + Acolor.RESET.get());
+        if (lucky >= 100 - this.getLuck()){
+            this.setLuck(this.getLuck() + 1);
+            this.setName(this.getName()  + " Lucky");
         }
         
         int minXp = lvl;
@@ -1164,7 +1474,7 @@ class Player extends Entity{
         Map<String, Integer> humanBonus = new HashMap<>();
         humanBonus.put("hp", 0);
         humanBonus.put("ac", 0);
-        humanBonus.put("moidifier", 1);
+        humanBonus.put("modifier", 1);
         humanBonus.put("luck", 0);
         Map<String, Integer> elfBonus = new HashMap<>();
         elfBonus.put("hp", -5);
@@ -1213,7 +1523,7 @@ class Player extends Entity{
         this.dicepool.clear();
         this.poisonpool.clear();
         
-        this.setName(Acolor.ORANGE.get() + newName + Acolor.RESET.get());
+        this.setName(newName);
         this.setLvl(1);
         this.setXp(0);
         this.setRace(racePool);
@@ -1524,7 +1834,7 @@ class Player extends Entity{
      * 
      * @return String that represent which potion it used 
      */
-    private String useBestPotion(){
+    public String useBestPotion(){
         String[] priorities = {"super potion", "strong potion", "medium potion", "weak potion"};
         int[] heals = {(int)(this.MAXHP * 0.7 + this.potionHeal), (int)(this.MAXHP * 0.5 + this.potionHeal), (int)(this.MAXHP * 0.3 + this.potionHeal), (int)(this.MAXHP * 0.15 + this.potionHeal)};
 
@@ -1551,19 +1861,17 @@ class Player extends Entity{
      * 
      * if he dies but have revive use it and remove it from the bag
      */
-    public void autoHealInFight(){
+    public boolean autoHealInFight(){
         if (this.isLowHealth()){
             if (this.hasAnyPotion()){
-                String used = useBestPotion();
-                System.out.println("You used a " + Acolor.RED.get() + used + Acolor.RESET.get() + ". HP is now " + Acolor.BLUE.get() + (String.valueOf(this.getHp())) + Acolor.RESET.get() + "/" + Acolor.GREEN.get() + (String.valueOf(this.MAXHP)) + Acolor.RESET.get() + ".");
+                return true;
             } else {
-                System.out.println(Acolor.RED.get() + "No potions!" + Acolor.RESET.get());
+                return false;
             }
         }if (this.getHp() <= 0 && this.bag.getOrDefault("revive", 0) > 0){
             this.setHp(this.MAXHP / 2);
             this.bag.put("revive", this.bag.get("revive") - 1);
-            System.out.println("You are not dead yet! " + Acolor.RED.get() + "used a revive" + Acolor.RESET.get() + ". HP is now " + Acolor.BLUE.get() + (String.valueOf(this.getHp())) + Acolor.RESET.get() + "/" + Acolor.GREEN.get() + (String.valueOf(this.MAXHP)) + Acolor.RESET.get() + ".");
-        }
+    }return false;
     }
 
     /**
@@ -2105,103 +2413,15 @@ class Shop{ // Can be accesed at the end of fights
  * handle game loop  combat flow and shop interactions
  */
 public class Fight{
-    //=============== POISON METHODS ==================
-    /**
-     * a method for the player if they can apply poison to try and apply the poison to the enemy
-     * 
-     * @param player current playing player 
-     * @param enemy current enemy
-     */
-    public static void tryApplyPoison(Player player, Enemy enemy){
-        Random rand = new Random();
-        int d100 = rand.nextInt(100) + 1;
-        if((player.canCastPoison() == true && (d100 + player.getLuck()) > 80)){
-            enemy.setPoisoned(true);
-            enemy.setPoisonCount(3); //last 3 ticks
-            System.out.println(enemy.getName() + Acolor.BGREEN.get() + " Is poisoned!" + Acolor.RESET.get());
-        }
-    }
-
-    /**
-     * check if the enemy is poisoned if yes apply the current player poison damage
-     * to the enemy health, also check the enemy poison count and lowers it
-     * 
-     * 
-     * @param player current playing player
-     * @param enemy current enemy
-     */
-    public static void processPoison(Player player, Enemy enemy){
-        
-        if(!enemy.isPoisoned()){
-            return;
-        }
-
-        int hit = player.poisondmg();
-        enemy.setHp(enemy.getHp() - hit);
-        enemy.setPoisonCount(enemy.getPoisonCount() - 1);
-        System.out.println(enemy.getName() + Acolor.BGREEN.get() + " Is poisoned! and was hit by: " + hit + Acolor.RESET.get() + " hp is : " + enemy.getHp());
-        if(enemy.getPoisonCount() <= 0){
-            enemy.setPoisoned(false);
-            System.out.println(enemy.getName() + Acolor.BGREEN.get() + " Is not poisoned anymore!" + Acolor.RESET.get());
-        }
-    }
 
 
-    //======== METHOD FOR ATTACKING ============
-    /**
-     * the main attacking method using rolls of chance of d20 using 2 entities
-     * using rolls and bonuses against ac if it pass lower the defender hp according to the attack
-     * also have a crit succsus and fail if roll is 1 or 20 
-     * 
-     * @param roll int value of the roll 
-     * @param att Entity the one who attacks
-     * @param def Entity the one who defends
-     * @return the entetity health
-     */
-    public static int attack(int roll, Entity att, Entity def){ // takes in the "dice" roll, attacker attack, attacked ac, attacked hp, name of the attacker, name of the attacked and returning new attacked hp
-        int crit = 20 - (att.getLuck() / 10);
-        if (((roll + att.hitBonus()) >= def.getAc() && def.getHp() > 0 && roll != 1) || roll >= (crit)){
-            if(roll >= crit){
-                 //Critical double damgae
-                int dmg = att.dmg() * 2;
-                def.setHp(def.getHp() - dmg);
-                System.out.println(Acolor.RED.get() + "CRITICAL!!! " + Acolor.RESET.get() + att.getName() + " hit! " + def.getName() + " for: " + Acolor.RED.get() + dmg + Acolor.RESET.get() + " hp is now at: " + def.getHp() + " points!");
-            }else{
-                int hit = att.dmg();
-                def.setHp(def.getHp() - hit);
-                System.out.println(att.getName() + " hit " + def.getName() + " for: " + Acolor.RED.get() + hit + Acolor.RESET.get() + " " + def.getName() + " hp is: " + def.getHp() + " points!");
-
-            }
-            if(att instanceof Player && def instanceof Enemy){ //poison machanics!
-                Player p = (Player)att;
-                Enemy e = (Enemy)def;
-                tryApplyPoison(p, e);
-            }
-        }
-        else if(roll == 1){ //1 is a critical miss no matter what
-            System.out.println("CRITICAL MISS FOR " + att.getName());
-        }
-        else{
-            System.out.println(att.getName() + " missed.");
-        }
-        return def.getHp();
-    }
-
-    // ============= Time Wait Method ===========
-    /**
-     * a wait time wrapper using thread sleep to slow the game 
-     * and make a little bit of wait
-     * 
-     * @param time int for how much time to wait (1000 = 1 second)
-     */
-    public static void wait(int time){
-        try{
-            Thread.sleep(time);
-        }catch(InterruptedException a){
-            System.out.println("Thread was interupted");
-        }
-    }
     
+
+
+    
+    
+
+
     // ============= Main ======================
 
     /**
@@ -2210,243 +2430,8 @@ public class Fight{
      * @param args arguments (not used)
      */
     public static void main(String[] args){
-        Random rand = new Random();
-        Scanner scan = new Scanner(System.in); // for user inputs
-        Player player = new Player(); // user player
-        String userAnsware1 = "PLACE HOLDER"; // for if the user wants to play
-        final String DEF_NAME = "hero";
-        boolean gameWon = false;
-        boolean finalBossSpawned = false;
-        SwingUtilities.invokeLater(() ->{
-           GameWindow game =  new GameWindow("Game", true);
-
+        SwingUtilities.invokeLater(() -> {
+            new GameEngine();
         });
-        
-        
-
-    
-        //diffrent types of counts 
-        int fightCount = 0;
-        int slimeCount = 0;
-        int wolfCount = 0;
-        int goblinCount = 0;
-        int dragonCount = 0;
-        int ratCount = 0;
-
-        //the system will creat the player
-        System.out.println("please enter your name");
-        String userName = scan.nextLine();
-        if( userName.equals("")){
-            userName = DEF_NAME;
-        }
-        player.newPlayer(userName);
-        if(player.getName().length() > 30){
-            player.setName(player.getName().substring(0, 30));
-        }
-
-        System.out.println("Hello " + Acolor.ORANGE.get() + player.getName() + Acolor.RESET.get() + ".");
-        System.out.println("This are your stats: ");
-        
-        wait(500);
-        
-        System.out.println("hp: " + Acolor.BLUE.get() + player.getHp() + Acolor.RESET.get());
-        System.out.println("ac: " + Acolor.RED.get() + player.getAc() + Acolor.RESET.get());
-        System.out.println("Weapon: " + player.getWeapon().getName() + " damage die: " + player.getWeapon().getDiceCount() + "d" + player.getWeapon().getDiceType());
-        System.out.println("Armor: " + player.getArmor().getName() + " ac: " + player.getArmor().getAc());
-        System.out.println("Gold: " + Acolor.YELLOW.get() + player.getGold() + Acolor.RESET.get());
-        wait(500);
-
-        while(!userAnsware1.equals("y") && !userAnsware1.equals("yes")){ //loop for the first init
-        System.out.println("Are you ready to start? y/n");
-        userAnsware1 = scan.next();
-
-        if(userAnsware1.equals("n") || userAnsware1.equals("no")){ 
-            System.out.println("Goodbye");
-            System.exit(0);
-        }
-        else if(userAnsware1.equals("y") || userAnsware1.equals("yes")){
-            userAnsware1 = "yes";
-        }
-        }
-        
-        
-            //========FIGHT BLOCK=======
-        while (player.getHp() > 0 && !gameWon){
-            Enemy e = new Enemy(); //spawn enemy
-            
-            if(!finalBossSpawned){
-                int xpLeft = player.xpNeeded() - player.getXp();
-        
-                if (player.getLvl() == 9 && xpLeft < 33){
-                    e.finalBoss(player);
-                    finalBossSpawned = true;
-                }else{
-                e.lvlBased(player.getLvl());
-                if(player.getLvl() >= 3){
-                    e.isBoss(false);
-                }
-            }
-        }else{
-            e.lvlBased(player.getLvl());
-            if(player.getLvl() >= 3){
-                e.isBoss(false);
-            }
-        }
-
-
-            wait(500);
-
-            System.out.println(player.getName() + " has met with " + e.getName() + "!" );
-            System.out.println(player.getName() + " HP: " + player.getHp() + " AC: " + player.getAc() + " Level: " + player.getLvl());
-            System.out.println(e.getName() + " HP: " + e.getHp() + " AC: " + e.getAc() + " Level: " + e.getLvl());
-            
-            wait(500);
-
-            System.out.println("---- FIGHT ----");
-            int count = 0; // For counting rounds
-            while ((player.getHp() > 0 && e.getHp() > 0)){
-            System.out.println("---- Round " + (count + 1) + "----");
-            int rollE = rand.nextInt(20) + 1;
-            int rollU = rand.nextInt(20) + 1;
-
-            wait(1000);
-  
-
-            System.out.println("You rolled! " + (rollU));
-            System.out.println("They rolled! " + (rollE));
-            
-                //=========USER HEALING========
-            player.autoHealInFight();
-            
-
-                //=======ENEMY METHOD=======
-            if(e.getHp() > 0){
-                player.setHp(attack(rollE, e, player));
-            }
-
-                //=======USER METHOD=========
-        
-            if(player.getHp() > 0){
-                e.setHp(attack(rollU, player, e));
-            }
-            processPoison(player, e);
-                //========== END OF ROUND ==========
-            count += 1;
-            
-            wait(500);
-
-            System.out.println("------ End of round " + count + "------");
-            }
-            
-            if(player.getHp() <= 0){
-                if(player.getBag().getOrDefault("revive", 0) > 0){
-                    player.setHp(player.getMaxHP() / 2);
-                    player.getBag().put("revive", player.getBag().get("revive") - 1);
-                    System.out.println("You have been revived! " + Acolor.BBLUE.get() + player.getHp() + Acolor.RESET.get());
-                }else {
-                    System.out.println("You have been defeated!");
-        
-                    wait(1000);
-
-                    System.out.println("========= "+ Acolor.RED.get() + "R I P" + Acolor.RESET.get() + " =========");
-                    wait(300);
-                    System.out.println("Name: " + player.getName());
-                    System.out.println("lvl: " + Acolor.BLUE.get() + player.getLvl() + Acolor.RESET.get());
-                    System.out.println("hp: " + Acolor.GREEN.get() + player.getMaxHP() + Acolor.RESET.get());
-                    System.out.println("ac: " + player.getAc());
-                    System.out.println("gold: " + Acolor.YELLOW.get() + (String.valueOf(player.getGold())) + Acolor.RESET.get());
-                    System.out.println("You have fought: " + fightCount + " fights");
-                    System.out.println("was slayed by " + Acolor.RED.get() + e.getName() + Acolor.RESET.get());
-                    wait(300);
-                    System.out.println("=========================");
-
-                    wait(1000);
-
-                    System.exit(0);
-                }
-
-            }else if(e.getHp() <= 0){
-                if(e.getData().equals("Slime")){
-                    slimeCount += 1;
-                }else if(e.getData().equals("Wolf")){
-                    wolfCount += 1;
-                }else if(e.getData().equals("Goblin")){
-                    goblinCount += 1;
-                }else if(e.getData().equals("Dragon")){
-                    dragonCount += 1;
-                }else if(e.getData().equals("Rat")){
-                    ratCount += 1;
-                }
-                if(e.getData().equals("Final Boss")){
-                    gameWon = true;
-                }
-                System.out.println("You have defeated the enemy! \n");
-                player.setXp(player.getXp() + e.getXp());
-                player.setGold(player.getGold() + e.getGold());
-                fightCount += 1;
-                e.dropChance(player.getHp(), player.getLvl(), player.getBag(), player);;
-                player.recoverAfterBattle();
-                System.out.println("\nYou Got " + e.getXp() + " xp and " + Acolor.YELLOW.get() + (String.valueOf(e.getGold())) + Acolor.RESET.get() + " gold!\n");
-                player.checkLvlUp();
-                
-                // Check if boss was defeated and offer feat
-                if(e.isBossEnemy() == true){
-                    player.offerBossFeat();
-                }
-                
-                System.out.println("You are lvl: " + Acolor.PINK.get() + player.getLvl() + Acolor.RESET.get() + ". " + Acolor.BORANGE.get() + (player.xpNeeded() - player.getXp()) + Acolor.RESET.get() + " needed more xp to lvl up.  with a " + player.getWeapon().getName() + " that does: " + (player.getWeapon().getDiceCount() + player.getDiceCount()) + "d" + player.getWeapon().getDiceType() + " + " + (player.getWeapon().getBonus() + player.getModifier()) + " " + player.dicePoolToString() + " damage." );
-                System.out.println("You also have: " + Acolor.GREEN.get() + player.getBag() + Acolor.RESET.get() + "\n");
-                System.out.println("Armor: " + player.getArmor().getName() + " that return currents: " + Acolor.BBLUE.get() + player.getArmor().getAc() + Acolor.RESET.get() + " ac.\n");
-                System.out.println("You have: " + Acolor.YELLOW.get() + (String.valueOf(player.getGold())) + Acolor.RESET.get() + " gold.\n");
-                player.displayFeats();
-                System.out.println();
-                
-                Shop shop = new Shop();
-                shop.getItem().makePotion();
-                shop.getWeapon().update(rand.nextInt(player.getLvl() + 5) + 1, player);
-                shop.getArmor().updateArmor(player);
-                System.out.println("Please enter any key and press enter to continue.");
-                
-                scan.next();
-                
-                // Handle pending feat selections if any
-                player.chooseFeatureFromInput(scan);
-                if(e.isBossEnemy()){
-                    player.chooseBossFeat(scan);
-                }
-                
-                System.out.println("In the shop there are:");
-                System.out.println(shop.getItem().getName() + " priced at: " + Acolor.YELLOW.get() + (String.valueOf(shop.getItem().getPrice())) + Acolor.RESET.get());
-                System.out.println(shop.getWeapon().getName() + " priced at: " + Acolor.YELLOW.get() + (String.valueOf(shop.getWeapon().getPrice())) + Acolor.RESET.get());
-                System.out.println(shop.getArmor().getName() + " priced at: " + Acolor.YELLOW.get() + (String.valueOf(shop.getArmor().getPrice())) + Acolor.RESET.get());
-                System.out.println("Do you want to go to the shop? y/n");
-                String shopInput = scan.next();
-                if(shopInput.equals("y") || shopInput.equals("yes")){
-                    shop.canBuyItem(shop.getItem(), scan, player);
-                    shop.canBuyWeapon(shop.getWeapon(), scan, player);
-                    shop.canBuyArmor( shop.getArmor(), scan, player);
-            }
-        }
     }
-
-    if(gameWon){
-    int score = (player.getXp() + ratCount + slimeCount + (wolfCount * 2) + (goblinCount * 3) + (dragonCount * 5) + player.getFeats().size() + player.getGold());
-    System.out.println("======= " + Acolor.GREEN.get() + "W I N " + Acolor.RESET.get() + "=======");
-    System.out.println("You have won the game!");
-    System.out.println(player.getName() + " have fought: " + fightCount + " fights");
-    System.out.println(player.getName() + " have: " + player.getGold() + " gold");
-    System.out.println(player.getName() +  " You have: " + player.getXp() + " xp");
-    System.out.println("Items: " + player.getArmor().getName() + ", " + player.getWeapon().getName() + ".");
-    System.out.println("You have defeated: ");
-    System.out.println(Acolor.YELLOW.get() + "Rats: " + ratCount + Acolor.RESET.get());
-    System.out.println(Acolor.BLUE.get() + "Slimes: " + slimeCount + Acolor.RESET.get());
-    System.out.println(Acolor.RED.get() + "Wolves: " + wolfCount + Acolor.RESET.get());
-    System.out.println(Acolor.BGREEN.get() + "Goblins: " + goblinCount + Acolor.RESET.get());
-    System.out.println(Acolor.PURPLE.get() + "Dragons: " + dragonCount + Acolor.RESET.get());
-    System.out.println("\n" + Acolor.CYAN.get() + "Feats Acquired:" + Acolor.RESET.get());
-    player.displayFeats();
-    System.out.println("\nYour score is: " + score);
-    System.out.println("=====================");
-    }
-}
 }
