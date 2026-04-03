@@ -24,7 +24,7 @@ import java.util.function.Consumer;
  * check me out in github - Hmimesh
  * 
  * @author Ben Farjun
- * @version 02/04/2026
+ * @version 03/04/2026
 */ 
 
 //TO DO:
@@ -63,6 +63,8 @@ class GameEngine{
     private boolean chooseDoorState = false;
     private boolean easyFightState = false;
     private boolean hardFightState = false;
+    private boolean afterBattlesState = false;
+    private boolean gameOverState = false;
     private boolean shopState = false;
     private boolean recoverState = false;
 
@@ -73,7 +75,7 @@ class GameEngine{
 
     public GameEngine(){
         _game = new GameWindow(DEAFULT_GAME_NAME, true, name -> {
-            // ENTER_NAME callback — build the player, then hand off to READY
+            // ENTER_NAME callback build the player, then hand off to READY
             this._player = new Player();
             this._player.newPlayer(name);
             _game.setPlayer(this._player);
@@ -97,7 +99,7 @@ class GameEngine{
             _game.print("Welcome " + this._player.getName() + "! Are you ready? (y/n)");
         });
 
-        // READY callback — yes goes to doors, no restarts name entry
+        // READY callback goes to doors, no restarts name entry
         _game.setOnReady(answer -> {
             if(answer.equalsIgnoreCase("yes") || answer.equalsIgnoreCase("y")){
                 _game.setState("DOOR_CHOOSE");
@@ -126,6 +128,37 @@ class GameEngine{
             }
         });
 
+        // AFTER_BATTLES callback — after winning a fight, ask if they want to continue, if yes go to doors again, if no end the game
+        _game.setOnAfterBattles(AfterBattles -> {
+            if(_game.getState().equals("AFTER_BATTLES")){
+                if(AfterBattles.equalsIgnoreCase("yes") || AfterBattles.equalsIgnoreCase("y")){
+                    _game.setState("SHOP");
+                    doorChooser();
+                } else if(AfterBattles.equalsIgnoreCase("no") || AfterBattles.equalsIgnoreCase("n")){
+                    _game.setState("REST");
+                    _game.print("Thanks for playing! See you next time");
+                } else {
+                    _game.print("Please answer with yes or no");
+                }
+            }
+        });
+
+        // Loosing condition : 
+        _game.setOnGameOver(answare -> {
+            if(answare.equalsIgnoreCase("yes") || answare.equalsIgnoreCase("y")){
+                _game.setState("ENTER_NAME");
+                _game.setScene(_game.getDefaultScene());
+                _game.print("Let's start over. Please enter your name:");
+                _game.setIsWaitingForPlayer(true);
+            } else if(answare.equalsIgnoreCase("no") || answare.equalsIgnoreCase("n")){
+                _game.setState("REST");
+                _game.print("Thanks for playing! See you next time");
+                System.exit(0);
+            } else {
+                _game.print("Please answer with yes or no");
+            }
+    });
+
         // Kick off game flow — GameEngine is the sole authority on initial state
         _game.setScene(_game.getDefaultScene());
         _game.setState("ENTER_NAME");
@@ -133,7 +166,53 @@ class GameEngine{
         _game.setIsWaitingForPlayer(true);
     }
 
+    //==================== GETTERS ==================
+    public Player getPlayer(){
+        return this._player;
+    }
+    public Enemy getEnemy(){
+        return this._enemy;
+    }
+    public Shop getShop(){
+        return this._shop;
+    }
 
+    public boolean isGameOver(){
+        return this.gameOverState;
+    }
+
+    //==================== SETTERS ==================
+    public void setPlayer(Player player){
+        this._player = player;
+    }
+
+    public void setEnemy(Enemy enemy){
+        this._enemy = enemy;
+    }   
+
+    public void setShop(Shop shop){
+        this._shop = shop;
+    }
+
+    public void setGameOver(boolean gameOver){
+        this.gameOverState = gameOver;
+    }
+
+    private void showGameOverScreen(){
+        _game.setState("GAME_OVER");
+        _game.setScene("======== RIP ========\n"
+                    + "Here lies " + this._player.getName() + "\n"
+                    +  "lvl: " + this._player.getLvl() + "\n"
+                    + "Race: " + this._player.getRace() + "\n"
+                    + "Feats: " + this._player.getFeats() + "\n"
+                    + "Inventory: " + this._player.getWeapon() + " and " + this._player.getArmor().getName() + "\n"
+                    + "who fought bravely but was defeated in the dungeon. \n" 
+                    + "Was defeted by " + this._enemy.getName() + " level: " + this._enemy.getLvl() + " in battle. \n" 
+                    + "=========================\n"
+                    + "DO YOU WANT TO START OVER? (y/n)");
+        _game.print("Do you want to start over? (y/n?)");
+
+    }
     //=============== POISON METHODS ================== 
     
      /**
@@ -294,14 +373,17 @@ class GameEngine{
 
                     if(_player.getHp() <= 0){
                         _game.print("You have been defeated by " + _enemy.getName() + " — better luck next time!");
-                        _game.setState("GAME_OVER");
+                        setGameOver(true);
+                        showGameOverScreen();
                         break;
+
                     } else if(_enemy.getHp() <= 0){
                         _game.print("You have defeated " + _enemy.getName() + " — congratulations!");
                         _player.setXp(_player.getXp() + _enemy.getXp());
                         _player.setGold(_player.getGold() + _enemy.getGold());
                         _player.checkLvlUp();
-                        _game.setState("REWARD");
+                        _game.setState("AFTER_BATTLES");
+    
                         break;
                     } else {
                         _game.print("The fight continues...");
@@ -353,6 +435,9 @@ class GameWindow{
     private Consumer<String> _onNameEntered;
     private Consumer<String> _onReady;
     private Consumer<String> _onDoorChoose;
+    private Consumer<String> _onAfterBattles;
+    private Consumer<String> _onGameOver;
+
 
 
     /**
@@ -474,9 +559,6 @@ class GameWindow{
         return text;
     }
 
-    //============= SETTERS AND GETTERS END ===========
-
-
     public void setIsWaitingForPlayer(boolean waiting){
         this.waitingForName = waiting;
     }
@@ -491,6 +573,14 @@ class GameWindow{
 
     public void setOnDoorChoose(Consumer<String> onDoorChoose){
         this._onDoorChoose = onDoorChoose;
+    }
+
+    public void setOnAfterBattles(Consumer<String> onAfterBattles){
+        this._onAfterBattles = onAfterBattles;
+    }
+
+    public void setOnGameOver(Consumer<String> onGameOver){
+        this._onGameOver = onGameOver;
     }
 
 
@@ -512,6 +602,14 @@ class GameWindow{
         }
         if(_state.equals("DOOR_CHOOSE") && _onDoorChoose != null){
             _onDoorChoose.accept(text);
+            return;
+        }
+        if(_state.equals("GAME_OVER") && _onGameOver != null){
+            _onGameOver.accept(text);
+            return;
+        }
+        if(_state.equals("AFTER_BATTLES") && _onAfterBattles != null){
+            _onAfterBattles.accept(text);
             return;
         }
         Commands cmd = Commands.fromInput(text);
@@ -787,6 +885,7 @@ abstract class Entity{
         return this.ac;
     }
     
+
 
     public int getBonus(){
         return this.bonus;
@@ -1564,6 +1663,11 @@ class Player extends Entity{
             Cheats.GOD.display();
             this.setHp(this.MAXHP);
             }
+        if(newName.equals("SEND HELP")){
+            Cheats.SENDHELP.active(this);
+            Cheats.SENDHELP.display();
+            this.setHp(this.MAXHP);
+        }
         raceBonus.containsKey(this.getRace());
             Map<String, Integer> bonuses = raceBonus.get(this.getRace());
             this.setMaxHP(this.getMaxHP() + bonuses.getOrDefault("hp", 0));
@@ -2124,6 +2228,17 @@ enum Cheats{
             p.setDiceCount(3);
             p.setAc(p.getAc() + 5);
             p.setLuck(5);
+        }
+    },
+    SENDHELP( "Send Help", 5, 0, -2, 0, -3, -3){
+        public void active(Player p){
+            p.setName(name);
+            p.setMaxHP(hp);
+            p.setGold(gold);
+            p.setModifier(modifier);
+            p.setDiceCount(diceCount);
+            p.setAc(p.getAc() + ac);
+            p.setLuck(-4);
         }
     };
     
