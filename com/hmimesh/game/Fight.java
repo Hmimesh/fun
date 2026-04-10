@@ -416,6 +416,7 @@ class GameWindow{
     private JScrollPane _sceneScroll;
     private JPanel _bottomPanel; 
     private JButton _sendButton;
+    private JButton _optionButton;
     private boolean waitingForName = false;
     private String _DEAFULT_NAME = "hero";
     private String _DEAFULT_SCENE = """
@@ -457,6 +458,7 @@ class GameWindow{
         _sceneArea = new JTextArea();
         _inputField = new JTextField();
         _sendButton = new JButton("Send");
+        _optionButton = new JButton("Options");
         _logScroll = new JScrollPane(_logArea);
         _sceneScroll = new JScrollPane(_sceneArea);
         _bottomPanel = new JPanel(new BorderLayout());
@@ -482,9 +484,14 @@ class GameWindow{
 
         _splitPane.setDividerLocation(850); //more for the scene that is on top less for the logger
 
+        
+
+
         _bottomPanel.setLayout(new BorderLayout());
         _bottomPanel.add(_inputField, BorderLayout.CENTER);
         _bottomPanel.add(_sendButton, BorderLayout.EAST);
+        _bottomPanel.add(_optionButton, BorderLayout.WEST);
+        
 
         _frame.setLayout(new BorderLayout());
         _frame.add(_bottomPanel, BorderLayout.SOUTH);
@@ -492,6 +499,7 @@ class GameWindow{
 
         _sendButton.addActionListener(e -> submitInput());
         _inputField.addActionListener(e -> submitInput());
+        _optionButton.addActionListener(e -> optionMenu());
 
 
         _sceneArea.setBackground(java.awt.Color.BLACK);
@@ -507,7 +515,6 @@ class GameWindow{
         _frame.setSize(1980, 1200);
         _frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         _frame.setVisible(visible);
-
         this._onNameEntered = onNameEntered;
     }
 
@@ -643,6 +650,66 @@ class GameWindow{
         _onNameEntered.accept(name);
     }
 
+    private void optionMenu(){
+        JPopupMenu menu = new JPopupMenu();
+        JMenuItem helpItem = new JMenuItem("Help");
+        JMenuItem colorsItem = new JMenuItem("Colors");
+        helpItem.addActionListener(ev -> {
+            Commands.HELP.enable(this, _player);
+        });
+        colorsItem.addActionListener(ev -> {
+            String[] options = {"Default", "Green on Black", "White on Black", "Dark Gray on Black"};
+            String choice = (String) JOptionPane.showInputDialog(
+                _frame,
+                "Choose a color scheme:",
+                "Color Options",
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                options,
+                options[0]
+            );
+            if(choice != null){
+                switch(choice){
+                    case "Default":
+                        _sceneArea.setBackground(java.awt.Color.BLACK);
+                        _sceneArea.setForeground(java.awt.Color.GREEN);
+                        _logArea.setBackground(java.awt.Color.BLACK);
+                        _logArea.setForeground(java.awt.Color.WHITE);
+                        _inputField.setBackground(java.awt.Color.DARK_GRAY);
+                        _inputField.setForeground(java.awt.Color.WHITE);
+                        break;
+                    case "Green on Black":
+                        _sceneArea.setBackground(java.awt.Color.BLACK);
+                        _sceneArea.setForeground(java.awt.Color.GREEN);
+                        _logArea.setBackground(java.awt.Color.BLACK);
+                        _logArea.setForeground(java.awt.Color.GREEN);
+                        _inputField.setBackground(java.awt.Color.BLACK);
+                        _inputField.setForeground(java.awt.Color.GREEN);
+                        break;
+                    case "White on Black":
+                        _sceneArea.setBackground(java.awt.Color.BLACK);
+                        _sceneArea.setForeground(java.awt.Color.WHITE);
+                        _logArea.setBackground(java.awt.Color.BLACK);
+                        _logArea.setForeground(java.awt.Color.WHITE);
+                        _inputField.setBackground(java.awt.Color.BLACK);
+                        _inputField.setForeground(java.awt.Color.WHITE);
+                        break;
+                    case "Dark Gray on Black":
+                        _sceneArea.setBackground(java.awt.Color.BLACK);
+                        _sceneArea.setForeground(java.awt.Color.DARK_GRAY);
+                        _logArea.setBackground(java.awt.Color.BLACK);
+                        _logArea.setForeground(java.awt.Color.DARK_GRAY);
+                        _inputField.setBackground(java.awt.Color.BLACK);
+                        _inputField.setForeground(java.awt.Color.DARK_GRAY);
+                        break;
+                }
+            }
+        });
+        menu.add(helpItem);
+        menu.add(colorsItem);
+        menu.show(_optionButton, 0, _optionButton.getHeight());
+
+}
 }
  
 //================= COMMAND ENUM =====================
