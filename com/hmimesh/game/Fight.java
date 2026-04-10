@@ -658,7 +658,7 @@ class GameWindow{
             Commands.HELP.enable(this, _player);
         });
         colorsItem.addActionListener(ev -> {
-            String[] options = {"Default", "Green on Black", "White on Black", "Dark Gray on Black"};
+            String[] options = {"Default", "Green on Black", "White on Black", "Dark Gray on Black", "Black on White", "Blue On Black", "Cyan on Black"};
             String choice = (String) JOptionPane.showInputDialog(
                 _frame,
                 "Choose a color scheme:",
@@ -701,6 +701,30 @@ class GameWindow{
                         _logArea.setForeground(java.awt.Color.DARK_GRAY);
                         _inputField.setBackground(java.awt.Color.BLACK);
                         _inputField.setForeground(java.awt.Color.DARK_GRAY);
+                        break;
+                    case "Black on White":
+                        _sceneArea.setBackground(java.awt.Color.WHITE);
+                        _sceneArea.setForeground(java.awt.Color.BLACK);
+                        _logArea.setBackground(java.awt.Color.WHITE);
+                        _logArea.setForeground(java.awt.Color.BLACK);
+                        _inputField.setBackground(java.awt.Color.WHITE);
+                        _inputField.setForeground(java.awt.Color.BLACK);
+                        break;
+                    case "Blue On Black":
+                        _sceneArea.setBackground(java.awt.Color.BLACK);
+                        _sceneArea.setForeground(java.awt.Color.BLUE);
+                        _logArea.setBackground(java.awt.Color.BLACK);
+                        _logArea.setForeground(java.awt.Color.BLUE);
+                        _inputField.setBackground(java.awt.Color.BLACK);
+                        _inputField.setForeground(java.awt.Color.BLUE);
+                        break;
+                    case "Cyan on Black":
+                        _sceneArea.setBackground(java.awt.Color.BLACK);
+                        _sceneArea.setForeground(java.awt.Color.CYAN);
+                        _logArea.setBackground(java.awt.Color.BLACK);
+                        _logArea.setForeground(java.awt.Color.CYAN);
+                        _inputField.setBackground(java.awt.Color.BLACK);
+                        _inputField.setForeground(java.awt.Color.CYAN);
                         break;
                 }
             }
