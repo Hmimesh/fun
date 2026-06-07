@@ -1,1 +1,25 @@
-/com/hmimehs/game/notes.text
+# Compiled class files
+*.class
+
+# Build output directories
+out/
+build/
+target/
+
+# IDE configuration
+.idea/
+.vscode/
+*.iml
+
+# Generated Javadoc — put future javadoc output in docs/api/ (ignored here)
+docs/api/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Developer notes (personal scratch file)
+com/hmimesh/game/notes.text
+
+# Old flat source layout (superseded by src/ — kept on disk for reference)
+com/
