@@ -374,7 +374,7 @@ class Player extends Entity {
      * Heals the player for {@link #recovery} % of max HP after a battle.
      * Prints the result to the console.
      */
-    public void recoverAfterBattle() {
+    public int recoverAfterBattle() {
         if (this.getHp() < this.MAXHP) {
             int heal = (int) (this.MAXHP * (this.recovery / 100.0));
             this.setHp(Math.min(this.getHp() + heal, this.MAXHP));
@@ -384,7 +384,9 @@ class Player extends Entity {
                 System.out.println("You recovered " + heal + " HP after battle. HP is now "
                         + this.getHp() + "/" + this.MAXHP + ".");
             }
+            return heal;
         }
+        return 0;
     }
 
     // ─── Level-up ────────────────────────────────────────────────────────────
@@ -394,17 +396,16 @@ class Player extends Entity {
      * effects (HP increase, modifier scaling, feat selection).
      * Loops until XP no longer exceeds the threshold.
      */
-    public void checkLvlUp() {
+    public void checkLvlUp(GameWindow game) {
         while (this.getXp() >= xpNeeded()) {
             this.setLvl(this.getLvl() + 1);
-            System.out.println(Acolor.GREEN.get() + "Lvl Up! You are now lvl "
-                    + this.getLvl() + Acolor.RESET.get());
+            game.print("LEVEL UP!  You are now level " + this.getLvl() + "!");
             this.MAXHP += rand.nextInt(10) + 1 + this.getLvl();
             this.setHp(this.MAXHP);
-            System.out.println("Your max HP is now " + this.MAXHP);
+            game.print("Max HP is now: " + this.MAXHP + "  (fully restored)");
             this.modifier = this.getLvl() / 2;
-            System.out.println("Your AC is " + this.getAc());
-            offerFeatSelection();
+            game.print("Modifier: " + this.modifier + "  |  AC: " + this.getAc());
+            offerFeatSelection();   // picks two feats silently; GameEngine shows them
         }
     }
 
@@ -442,16 +443,32 @@ class Player extends Entity {
         while (feat2 == feat1) {
             feat2 = weightedFeats.get(rand.nextInt(weightedFeats.size()));
         }
-        System.out.println(Acolor.PURPLE.get() + "\n===== FEAT SELECTION =====" + Acolor.RESET.get());
-        System.out.println("You can choose one feat:");
-        System.out.println("Option 1: "); feat1.display();
-        System.out.println("\nOption 2: "); feat2.display();
         storePendingFeats(feat1, feat2);
     }
 
     private void storePendingFeats(Feat f1, Feat f2) {
         pendingFeat[0] = f1;
         pendingFeat[1] = f2;
+    }
+
+    // ── GUI-oriented feat helpers ──────────────────────────────────────────────
+
+    /** Returns {@code true} when the player has feats waiting to be chosen. */
+    public boolean hasPendingFeat() { return pendingFeat[0] != null; }
+
+    /** Returns the pending feat at index 0 or 1. */
+    public Feat getPendingFeat(int idx) { return pendingFeat[idx]; }
+
+    /**
+     * Applies the feat chosen by the player through the GUI and clears pending slots.
+     *
+     * @param choice "1" picks feat 0, anything else picks feat 1
+     */
+    public void applyPendingFeatByChoice(String choice) {
+        if (pendingFeat[0] == null) return;
+        applyFeat("1".equals(choice) ? pendingFeat[0] : pendingFeat[1]);
+        pendingFeat[0] = null;
+        pendingFeat[1] = null;
     }
 
     /**

@@ -101,20 +101,24 @@ class GameEngine {
             }
         });
 
-        // AFTER_BATTLES callback: continue to next fight or rest
+        // AFTER_BATTLES callback: continue to shop or rest
         _game.setOnAfterBattles(answer -> {
             if (_game.getState() == GameState.AFTER_BATTLES) {
-                if (answer.equalsIgnoreCase("yes") || answer.equalsIgnoreCase("y")) {
+                if (answer.equalsIgnoreCase("1") || answer.equalsIgnoreCase("Shop") || answer.equalsIgnoreCase("s")) {
                     _game.setState(GameState.SHOP);
-                    doorChooser();
-                } else if (answer.equalsIgnoreCase("no") || answer.equalsIgnoreCase("n")) {
+                    shop(_game, _player);
+                } else if (answer.equalsIgnoreCase("2") || answer.equalsIgnoreCase("Rest") || answer.equalsIgnoreCase("r")) {
                     _game.setState(GameState.REST);
-                    _game.print("Thanks for playing! See you next time.");
+                    int heal = _player.recoverAfterBattle();
+                    _game.print("You chose to rest. Your recovered: " + heal + "your HP is now: " + _player.getHp() + "/" + _player.getMaxHP() + "HP");
+                    wait(1000);
+                    doorChooser();
                 } else {
-                    _game.print("Please answer with yes or no.");
+                    _game.print("Please answer with 1 - Shop or 2 - Rest.");
                 }
             }
         });
+
 
         // GAME_OVER callback: restart or exit
         _game.setOnGameOver(answer -> {
@@ -132,12 +136,29 @@ class GameEngine {
             }
         });
 
+        // FEAT_CHOOSE callback: player picks one of the two offered feats
+        _game.setOnLevelUp(answer -> {
+            if (!_player.hasPendingFeat()) return;
+            if (answer.equals("1") || answer.equals("2")) {
+                Feat chosen = _player.getPendingFeat(answer.equals("1") ? 0 : 1);
+                _player.applyPendingFeatByChoice(answer);
+                _game.print("You chose: " + chosen.name + "!");
+                _game.print("  → " + chosen.description);
+                _game.setState(GameState.AFTER_BATTLES);
+                _game.print("Where to next? \n  1 - Shop\n  2 - Rest\nType 1 or 2 to choose:");
+            } else {
+                _game.print("Please type 1 or 2 to choose your feat.");
+            }
+        });
+
         // Kick off the game
         _game.setScene(_game.getDefaultScene());
         _game.setState(GameState.ENTER_NAME);
         _game.print("Please enter your name:");
         _game.setIsWaitingForPlayer(true);
     }
+
+
 
     // ─── Getters / setters ───────────────────────────────────────────────────
 
@@ -338,11 +359,24 @@ class GameEngine {
                         _game.print("You defeated " + _enemy.getName() + " — congratulations!");
                         _player.setXp(_player.getXp() + _enemy.getXp());
                         _player.setGold(_player.getGold() + _enemy.getGold());
-                        _player.checkLvlUp();
-                        // Transition to AFTER_BATTLES on the EDT before the user can click
+                        _player.checkLvlUp(_game);
+                        // After victory: show feat selection or go straight to AFTER_BATTLES
                         SwingUtilities.invokeLater(() -> {
-                            _game.setState(GameState.AFTER_BATTLES);
-                            _game.print("Do you want to continue? (y/n)");
+                            if (_player.hasPendingFeat()) {
+                                Feat f1 = _player.getPendingFeat(0);
+                                Feat f2 = _player.getPendingFeat(1);
+                                _game.setState(GameState.FEAT_CHOOSE);
+                                _game.print("══════ FEAT SELECTION ══════");
+                                _game.print("[1]  " + f1.name + " — " + f1.description);
+                                _game.print("[2]  " + f2.name + " — " + f2.description);
+                                _game.print("Type 1 or 2 to choose:");
+                            } else {
+                                _game.setState(GameState.AFTER_BATTLES);
+                                _game.print("Where to next\n");
+                                _game.print("  1 - Shop");
+                                _game.print("  2 - Rest");
+                                _game.print("Type 1 or 2 to choose:");
+                            }
                         });
                         break;
                     } else {
@@ -378,5 +412,60 @@ class GameEngine {
           + "DO YOU WANT TO START OVER? (y/n)"
         );
         _game.print("Do you want to start over? (y/n)");
+    }
+
+
+    public void shop(GameWindow _game, Player _player) {
+        _game.setState(GameState.SHOP);
+        _shop = new Shop();
+
+        // Generate items for sale
+        Weapon wepForSale = new Weapon();
+        wepForSale.update(new Random().nextInt(13) + 1, _player);
+        Item itemForSale = new Item();
+        itemForSale.makePotion();
+
+        // Show the shop in the scene panel
+        _game.setScene(
+            "══════════ SHOP ══════════\n"
+        + "1 - Weapon: " + wepForSale + " — " + wepForSale.getPrice() + "g\n"
+        + "2 - Potion: " + itemForSale.getName() + " — " + itemForSale.getPrice() + "g\n"
+        + "3 - Leave shop\n"
+        + "Your gold: " + _player.getGold() + "g\n"
+        + "═══════════════════════════"
+        );
+        _game.print("What do you want to buy? (1/2/3)");
+
+        // Register the callback
+        _game.setOnShop(answer -> {
+            if (answer.equals("1")) {
+                if (_player.getGold() >= wepForSale.getPrice()) {
+                    _player.setGold(_player.getGold() - wepForSale.getPrice());
+                    _player.setWeapon(wepForSale);
+                    _game.print("You bought " + wepForSale.getName() + "!");
+            } else {
+                _game.print("Insufficient gold!");
+                }
+            } else if (answer.equals("2")) {
+                if (_player.getGold() >= itemForSale.getPrice()) {
+                    _player.setGold(_player.getGold() - itemForSale.getPrice());
+                    _player.getBag().put(itemForSale.getName(),
+                    _player.getBag().getOrDefault(itemForSale.getName(), 0) + 1);
+                    _game.print("You bought " + itemForSale.getName() + "!");
+                } else {
+                    _game.print("Insufficient gold!");
+                }
+            } else if (answer.equals("3")) {
+                _game.print("You leave the shop.");
+                goToDoors();
+            } else {
+                _game.print("Please type 1, 2, or 3.");
+            }
+        });
+    }
+
+    private void goToDoors() {
+        _game.setState(GameState.DOOR_CHOOSE);
+        doorChooser();
     }
 }

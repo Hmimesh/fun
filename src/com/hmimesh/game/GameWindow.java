@@ -55,6 +55,8 @@ class GameWindow {
     private Consumer<String> _onDoorChoose;
     private Consumer<String> _onAfterBattles;
     private Consumer<String> _onGameOver;
+    private Consumer<String> _onLevelUp;
+    private Consumer<String> _onShop;
 
     // ─── Constants ───────────────────────────────────────────────────────────
 
@@ -175,6 +177,8 @@ class GameWindow {
     public void setOnDoorChoose(Consumer<String> cb)   { this._onDoorChoose   = cb; }
     public void setOnAfterBattles(Consumer<String> cb) { this._onAfterBattles = cb; }
     public void setOnGameOver(Consumer<String> cb)     { this._onGameOver     = cb; }
+    public void setOnLevelUp(Consumer<String> cb)      { this._onLevelUp      = cb; }
+    public void setOnShop(Consumer<String> cb)         { this._onShop         = cb; }
 
     public void setName(String name) {
         SwingUtilities.invokeLater(() -> _frame.setTitle(name));
@@ -219,6 +223,10 @@ class GameWindow {
         }
         if (_state == GameState.AFTER_BATTLES && _onAfterBattles != null) {
             _onAfterBattles.accept(text);
+            return;
+        }
+        if (_state == GameState.FEAT_CHOOSE && _onLevelUp != null) {
+            _onLevelUp.accept(text);
             return;
         }
         // General commands (help, stats, inventory, etc.)

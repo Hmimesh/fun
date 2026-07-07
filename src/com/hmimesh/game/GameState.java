@@ -31,9 +31,12 @@ public enum GameState {
     /** The player's HP reached 0; showing the death screen. */
     GAME_OVER,
 
-    /** The player chose to rest / exit without continuing. */
+    /** The player chose to rest  */
     REST,
 
     /** The player is in the shop between battles. */
-    SHOP
+    SHOP,
+
+    /** Player must choose one of two feats offered after leveling up. */
+    FEAT_CHOOSE
 }
